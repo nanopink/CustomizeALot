@@ -34,6 +34,17 @@ public class CustomizeALotHealthBarRendererTest
 	}
 
 	@Test
+	public void projectsOnlyRenderableHealthStates()
+	{
+		assertTrue(CustomizeALotHealthBarRenderer.isRenderableHealthState(true, 0, 30));
+		assertTrue(CustomizeALotHealthBarRenderer.isRenderableHealthState(true, 15, 30));
+		assertFalse(CustomizeALotHealthBarRenderer.isRenderableHealthState(false, 15, 30));
+		assertFalse(CustomizeALotHealthBarRenderer.isRenderableHealthState(true, -1, 30));
+		assertFalse(CustomizeALotHealthBarRenderer.isRenderableHealthState(true, 15, 0));
+		assertFalse(CustomizeALotHealthBarRenderer.isRenderableHealthState(true, 15, -1));
+	}
+
+	@Test
 	public void computesClampedFillWidth()
 	{
 		assertEquals(0, CustomizeALotHealthBarRenderer.filledWidth(30, 0, 30));
@@ -125,6 +136,47 @@ public class CustomizeALotHealthBarRendererTest
 	}
 
 	@Test
+	public void configuredOffsetsStayConstantAcrossProjectedActorPositions()
+	{
+		assertHealthBarOffset(210, 380);
+		assertHealthBarOffset(470, 125);
+
+		assertEquals(
+			10.0,
+			CustomizeALotHealthBarRenderer.barLeft(210, 30.5, 10)
+				- CustomizeALotHealthBarRenderer.barLeft(210, 30.5, 0),
+			0.0);
+		assertEquals(
+			-10.0,
+			CustomizeALotHealthBarRenderer.barTop(380, 5.5, 10)
+				- CustomizeALotHealthBarRenderer.barTop(380, 5.5, 0),
+			0.0);
+	}
+
+	@Test
+	public void thickSolidBordersDoNotEnterTheChatLane()
+	{
+		int chatLaneTop = 120;
+		double height = 5.0;
+		assertEquals(
+			113.0,
+			CustomizeALotHealthBarRenderer.solidBarTop(chatLaneTop, height, 0, 0.0),
+			0.0);
+		assertEquals(
+			113.0,
+			CustomizeALotHealthBarRenderer.solidBarTop(chatLaneTop, height, 0, 2.0),
+			0.0);
+
+		double barTop = CustomizeALotHealthBarRenderer.solidBarTop(
+			chatLaneTop,
+			height,
+			0,
+			10.0);
+		assertEquals(105.0, barTop, 0.0);
+		assertEquals(chatLaneTop, barTop + height + 10.0, 0.0);
+	}
+
+	@Test
 	public void dynamicScaleInterpolatesAndClampsAtThreshold()
 	{
 		assertEquals(
@@ -151,6 +203,21 @@ public class CustomizeALotHealthBarRendererTest
 				150,
 				100,
 				200));
+	}
+
+	private static void assertHealthBarOffset(int anchorX, int anchorY)
+	{
+		assertEquals(
+			10,
+			CustomizeALotHealthBarRenderer.barLeft(anchorX, 30, 10)
+				- CustomizeALotHealthBarRenderer.barLeft(anchorX, 30, 0));
+		assertEquals(
+			-10,
+			CustomizeALotHealthBarRenderer.barTop(anchorY, 5, 10)
+				- CustomizeALotHealthBarRenderer.barTop(anchorY, 5, 0));
+		assertEquals(
+			7,
+			anchorY - CustomizeALotHealthBarRenderer.barTop(anchorY, 5, 0));
 	}
 
 	@Test

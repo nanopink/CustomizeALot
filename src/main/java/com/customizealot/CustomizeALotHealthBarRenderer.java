@@ -34,7 +34,6 @@ final class CustomizeALotHealthBarRenderer
 {
 	static final int NO_OCCUPIED_TOP = Integer.MAX_VALUE;
 
-	private static final BufferedImage ANCHOR_IMAGE = new BufferedImage(1, 1, BufferedImage.TYPE_INT_ARGB);
 	private static final int CACHE_FAILURE_RETRY_CYCLES = 10;
 	private static final Color DEFAULT_FRONT_COLOR = new Color(45, 190, 88);
 	private static final Color DEFAULT_FRONT_SECONDARY_COLOR = new Color(34, 158, 72);
@@ -105,32 +104,51 @@ final class CustomizeALotHealthBarRenderer
 		this(client, config, null);
 	}
 
-	int render(Graphics2D graphics, Actor actor)
+	int render(Graphics2D graphics, Actor actor, Point anchor, int stackAnchorY)
 	{
-		if (!config.healthBarsEnabled())
+		if (actor == null || !config.healthBarsEnabled() || anchor == null)
 		{
 			return NO_OCCUPIED_TOP;
 		}
 
 		int ratio = actor.getHealthRatio();
 		int healthScale = actor.getHealthScale();
-		if (ratio < 0 || healthScale <= 0)
-		{
-			return NO_OCCUPIED_TOP;
-		}
-
-		Point anchor = actor.getCanvasImageLocation(ANCHOR_IMAGE, actor.getLogicalHeight() + 15);
-		if (anchor == null)
+		if (!isRenderableHealthState(true, ratio, healthScale))
 		{
 			return NO_OCCUPIED_TOP;
 		}
 
 		if (usesRuneScapeSprites(config.healthBarPreset()))
 		{
-			return drawNative(graphics, anchor, ratio, healthScale);
+			return drawNative(graphics, anchor, stackAnchorY, ratio, healthScale);
 		}
 
-		return drawSolid(graphics, actor, anchor, ratio, healthScale, monotonicMillis());
+		return drawSolid(
+			graphics,
+			actor,
+			anchor,
+			stackAnchorY,
+			ratio,
+			healthScale,
+			monotonicMillis());
+	}
+
+	boolean hasRenderableHealthBar(Actor actor)
+	{
+		if (actor == null || !config.healthBarsEnabled())
+		{
+			return false;
+		}
+
+		return isRenderableHealthState(
+			true,
+			actor.getHealthRatio(),
+			actor.getHealthScale());
+	}
+
+	static boolean isRenderableHealthState(boolean enabled, int ratio, int scale)
+	{
+		return enabled && ratio >= 0 && scale > 0;
 	}
 
 	void recordDamage(Actor actor, int hitsplatType, int amount)
@@ -197,7 +215,12 @@ final class CustomizeALotHealthBarRenderer
 			|| hitsplatType == HitsplatID.BURN;
 	}
 
-	private int drawNative(Graphics2D graphics, Point anchor, int ratio, int healthScale)
+	private int drawNative(
+		Graphics2D graphics,
+		Point anchor,
+		int stackAnchorY,
+		int ratio,
+		int healthScale)
 	{
 		int[] spriteIds = healthSpritesFor(healthScale);
 		CustomizeALotSprite front = getSprite(spriteIds[1]);
@@ -223,8 +246,8 @@ final class CustomizeALotHealthBarRenderer
 		int height = rasterDimension(scaledDimension(
 			clampedHealthBarHeight(config.healthBarHeight()),
 			heightPercent));
-		int x = anchor.getX() - width / 2 + config.healthBarXOffset();
-		int y = anchor.getY() - height - 2 - config.healthBarYOffset();
+		int x = barLeft(anchor.getX(), width, config.healthBarXOffset());
+		int y = barTop(stackAnchorY, height, config.healthBarYOffset());
 		int fillWidth = filledWidth(width, ratio, healthScale);
 		CustomizeALotSpriteScalingMode scalingMode = config.spriteScalingMode();
 		BufferedImage backImage = back.getImageForScaling(scalingMode, width, height);
@@ -251,6 +274,7 @@ final class CustomizeALotHealthBarRenderer
 		Graphics2D graphics,
 		Actor actor,
 		Point anchor,
+		int stackAnchorY,
 		int ratio,
 		int healthScale,
 		long nowMillis)
@@ -273,10 +297,13 @@ final class CustomizeALotHealthBarRenderer
 		double height = scaledDimension(
 			clampedHealthBarHeight(config.healthBarHeight()),
 			heightPercent);
-		double x = alignedCenteredCoordinate(
-			anchor.getX() + config.healthBarXOffset(),
-			width);
-		double y = anchor.getY() - height - 2.0 - config.healthBarYOffset();
+		double borderThickness = clampBorderThickness(config.healthBarBorderThickness());
+		double x = barLeft(anchor.getX(), width, config.healthBarXOffset());
+		double y = solidBarTop(
+			stackAnchorY,
+			height,
+			config.healthBarYOffset(),
+			borderThickness);
 		CustomizeALotHealthBarFillDirection fillDirection = effectiveFillDirection(
 			config.healthBarFillDirection());
 		double maximumFillExtent = fillDirection.isVertical() ? height : width;
@@ -301,7 +328,6 @@ final class CustomizeALotHealthBarRenderer
 			damageTrails.remove(actor);
 		}
 		double damageTrailExtent = Math.max(fillExtent, maximumFillExtent * damageTrailFraction);
-		double borderThickness = clampBorderThickness(config.healthBarBorderThickness());
 		Color segmentColor = orDefault(config.healthBarSegmentColor(), DEFAULT_SEGMENT_COLOR);
 		boolean drawSegments = config.healthBarSegmentsEnabled()
 			&& segmentColor.getAlpha() > 0
@@ -341,6 +367,36 @@ final class CustomizeALotHealthBarRenderer
 			borderThickness,
 			config.healthBarCornerRadius());
 		return (int) Math.floor(y - borderThickness);
+	}
+
+	static int barLeft(int anchorX, int width, int xOffset)
+	{
+		return anchorX - width / 2 + xOffset;
+	}
+
+	static double barLeft(int anchorX, double width, int xOffset)
+	{
+		return alignedCenteredCoordinate(anchorX + xOffset, width);
+	}
+
+	static int barTop(int anchorY, int height, int yOffset)
+	{
+		return anchorY - height - 2 - yOffset;
+	}
+
+	static double barTop(int anchorY, double height, int yOffset)
+	{
+		return anchorY - height - 2.0 - yOffset;
+	}
+
+	static double solidBarTop(
+		int anchorY,
+		double height,
+		int yOffset,
+		double borderThickness)
+	{
+		return barTop(anchorY, height, yOffset)
+			- Math.max(0.0, borderThickness - 2.0);
 	}
 
 	static void drawCustomBar(

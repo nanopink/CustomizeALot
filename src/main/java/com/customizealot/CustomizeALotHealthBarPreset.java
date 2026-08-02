@@ -37,6 +37,13 @@ public enum CustomizeALotHealthBarPreset
 
 	private static Map<String, Object> ruinedHeirSettings()
 	{
+		Map<String, Object> values = new LinkedHashMap<>(version2RuinedHeirSettings());
+		values.put(CustomizeALotConfig.HEALTH_BAR_Y_OFFSET_KEY, 2);
+		return Collections.unmodifiableMap(values);
+	}
+
+	static Map<String, Object> version2RuinedHeirSettings()
+	{
 		Map<String, Object> values = new LinkedHashMap<>(previousRuinedHeirSettings());
 		values.put(CustomizeALotConfig.HEALTH_BAR_SCALE_MODE_KEY,
 			CustomizeALotHealthScaleMode.THRESHOLD);

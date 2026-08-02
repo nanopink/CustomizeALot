@@ -55,7 +55,7 @@ public class CustomizeALotPlugin extends Plugin
 	private static final String LEGACY_TRIANGULAR_LAYOUT_MODE = "TRIANGULAR";
 	private static final String CONFIG_GROUP_MIGRATION_VERSION = "1";
 	private static final String PRESET_WORKFLOW_VERSION = "2";
-	private static final String SECTION_PRESET_VERSION = "2";
+	private static final String SECTION_PRESET_VERSION = "3";
 
 	@Inject
 	private CustomizeALotConfig config;
@@ -772,8 +772,11 @@ public class CustomizeALotPlugin extends Plugin
 			sectionPresetUpdateNeeded,
 			healthBarPreset == CustomizeALotHealthBarPreset.RUINED_HEIR,
 			healthBarSettingsMatchConfig(
-				CustomizeALotHealthBarPreset.previousRuinedHeirSettings(),
+				CustomizeALotHealthBarPreset.version2RuinedHeirSettings(),
 				config)
+				|| healthBarSettingsMatchConfig(
+					CustomizeALotHealthBarPreset.previousRuinedHeirSettings(),
+					config)
 				|| healthBarSettingsMatchConfig(
 					CustomizeALotHealthBarPreset.legacyRuinedHeirSettings(),
 					config)))
