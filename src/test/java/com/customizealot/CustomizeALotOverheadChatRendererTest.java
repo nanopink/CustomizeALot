@@ -109,6 +109,54 @@ public class CustomizeALotOverheadChatRendererTest
 	}
 
 	@Test
+	public void reservesTheChatLaneOnlyForVisibleMessages()
+	{
+		CustomizeALotLocalChatEffectTracker tracker =
+			new CustomizeALotLocalChatEffectTracker();
+		Object actor = new Object();
+		CustomizeALotOverheadChatRenderer.Style style =
+			CustomizeALotOverheadChatRenderer.captureStyle(new CustomizeALotConfig()
+			{
+			});
+
+		assertTrue(CustomizeALotOverheadChatRenderer.hasRenderableMessage(
+			null,
+			tracker.messageStateFor(actor, "Hello", 100, 0, 150),
+			style,
+			Color.YELLOW));
+		assertFalse(CustomizeALotOverheadChatRenderer.hasRenderableMessage(
+			null,
+			tracker.messageStateFor(actor, "Hello", 0, 0, 150),
+			style,
+			Color.YELLOW));
+		assertFalse(CustomizeALotOverheadChatRenderer.hasRenderableMessage(
+			null,
+			tracker.messageStateFor(actor, null, 100, 0, 150),
+			style,
+			Color.YELLOW));
+		assertFalse(CustomizeALotOverheadChatRenderer.hasRenderableMessage(
+			null,
+			tracker.messageStateFor(actor, "<col=ff0000></col>", 100, 0, 150),
+			style,
+			Color.YELLOW));
+
+		CustomizeALotOverheadChatRenderer.Style invisibleStyle =
+			CustomizeALotOverheadChatRenderer.captureStyle(new CustomizeALotConfig()
+			{
+				@Override
+				public boolean overheadChatShadow()
+				{
+					return false;
+				}
+			});
+		assertFalse(CustomizeALotOverheadChatRenderer.hasRenderableMessage(
+			null,
+			tracker.messageStateFor(actor, "Hello", 100, 0, 150),
+			invisibleStyle,
+			new Color(0, 0, 0, 0)));
+	}
+
+	@Test
 	public void relationshipColorsUseGroupIronThenFriendThenClanPrecedence()
 	{
 		Color fallback = new Color(1, 2, 3, 4);
@@ -257,38 +305,57 @@ public class CustomizeALotOverheadChatRendererTest
 	}
 
 	@Test
-	public void placesTextAboveEarlierActorUiBeforeApplyingUserOffset()
+	public void anchorsTextBelowHealthAndIconsWithLocalUserOffsets()
 	{
 		assertEquals(
-			80,
-			CustomizeALotOverheadChatRenderer.baselineY(
-				80,
-				CustomizeALotHealthBarRenderer.NO_OCCUPIED_TOP,
-				3,
+			110,
+			CustomizeALotOverheadChatRenderer.chatLaneTop(
+				120,
+				12,
+				CustomizeALotOverheadChatEffect.STATIC));
+		assertEquals(
+			122,
+			CustomizeALotOverheadChatRenderer.chatBaseline(
+				120,
 				0));
-		assertEquals(95, CustomizeALotOverheadChatRenderer.baselineY(120, 100, 3, 0));
-		assertEquals(100, CustomizeALotOverheadChatRenderer.baselineY(120, 100, 3, -5));
+		assertEquals(
+			127,
+			CustomizeALotOverheadChatRenderer.chatBaseline(
+				120,
+				-5));
 	}
 
 	@Test
-	public void animatedTextReservesItsFullMovementAboveActorUi()
+	public void animatedTextKeepsItsTopInsideTheReservedChatLane()
 	{
-		assertEquals(
-			90,
-			CustomizeALotOverheadChatRenderer.baselineY(
-				120,
-				100,
-				3,
-				0,
-				CustomizeALotOverheadChatEffect.WAVE));
-		assertEquals(
-			88,
-			CustomizeALotOverheadChatRenderer.baselineY(
-				120,
-				100,
-				3,
-				0,
-				CustomizeALotOverheadChatEffect.SHAKE));
+		int actorTopY = 120;
+		int ascent = 12;
+		for (CustomizeALotOverheadChatEffect effect : CustomizeALotOverheadChatEffect.values())
+		{
+			int laneTop = CustomizeALotOverheadChatRenderer.chatLaneTop(
+				actorTopY,
+				ascent,
+				effect);
+			int baseline = CustomizeALotOverheadChatRenderer.chatBaseline(
+				actorTopY,
+				0);
+			assertEquals(
+				laneTop,
+				CustomizeALotOverheadChatRenderer.effectBounds(
+					10,
+					baseline,
+					40,
+					ascent,
+					3,
+					effect).y);
+		}
+	}
+
+	@Test
+	public void configuredOffsetsStayConstantAcrossProjectedActorPositions()
+	{
+		assertChatOffset(210, 380);
+		assertChatOffset(470, 125);
 	}
 
 	@Test
@@ -312,6 +379,116 @@ public class CustomizeALotOverheadChatRendererTest
 				10,
 				3,
 				Arrays.asList(new Rectangle(0, 88, 20, 16))));
+	}
+
+	@Test
+	public void collisionShiftJumpsOverTheActorsOwnUiStack()
+	{
+		int baseline = CustomizeALotOverheadChatRenderer.collisionFreeBaseline(
+			10,
+			122,
+			50,
+			10,
+			3,
+			CustomizeALotOverheadChatEffect.STATIC,
+			80,
+			110,
+			Arrays.asList(new Rectangle(0, 105, 80, 10)));
+		Rectangle bounds = CustomizeALotOverheadChatRenderer.effectBounds(
+			10,
+			baseline,
+			50,
+			10,
+			3,
+			CustomizeALotOverheadChatEffect.STATIC);
+
+		assertEquals(74, baseline);
+		assertTrue(bounds.y + bounds.height <= 78);
+	}
+
+	@Test
+	public void collisionShiftClearsTheOwnUiStackForEveryEffect()
+	{
+		for (CustomizeALotOverheadChatEffect effect : CustomizeALotOverheadChatEffect.values())
+		{
+			Rectangle preferredBounds = CustomizeALotOverheadChatRenderer.effectBounds(
+				10,
+				200,
+				50,
+				10,
+				3,
+				effect);
+			Rectangle blocker = new Rectangle(
+				preferredBounds.x,
+				preferredBounds.y,
+				preferredBounds.width,
+				Math.max(1, preferredBounds.height / 2));
+			int baseline = CustomizeALotOverheadChatRenderer.collisionFreeBaseline(
+				10,
+				200,
+				50,
+				10,
+				3,
+				effect,
+				130,
+				190,
+				Arrays.asList(blocker));
+			Rectangle resolvedBounds = CustomizeALotOverheadChatRenderer.effectBounds(
+				10,
+				baseline,
+				50,
+				10,
+				3,
+				effect);
+
+			assertTrue(
+				effect.name(),
+				resolvedBounds.y + resolvedBounds.height <= 128);
+		}
+	}
+
+	@Test
+	public void ownUiCollisionGuardTranslatesWithTheProjectedStack()
+	{
+		int baseline = CustomizeALotOverheadChatRenderer.collisionFreeBaseline(
+			10,
+			122,
+			50,
+			10,
+			3,
+			CustomizeALotOverheadChatEffect.WAVE,
+			80,
+			110,
+			Arrays.asList(new Rectangle(0, 105, 80, 10)));
+		int translated = CustomizeALotOverheadChatRenderer.collisionFreeBaseline(
+			10,
+			422,
+			50,
+			10,
+			3,
+			CustomizeALotOverheadChatEffect.WAVE,
+			380,
+			410,
+			Arrays.asList(new Rectangle(0, 405, 80, 10)));
+
+		assertEquals(300, translated - baseline);
+	}
+
+	@Test
+	public void collisionShiftDoesNotReserveAnAbsentUiStack()
+	{
+		assertEquals(
+			99,
+			CustomizeALotOverheadChatRenderer.collisionFreeBaseline(
+				10,
+				122,
+				50,
+				10,
+				3,
+				CustomizeALotOverheadChatEffect.STATIC,
+				CustomizeALotHealthBarRenderer.NO_OCCUPIED_TOP,
+				110,
+				Arrays.asList(new Rectangle(0, 105, 80, 10))));
 	}
 
 	@Test
@@ -475,6 +652,28 @@ public class CustomizeALotOverheadChatRendererTest
 		assertEquals("Shake", CustomizeALotOverheadChatEffect.SHAKE.toString());
 		assertEquals("Scroll", CustomizeALotOverheadChatEffect.SCROLL.toString());
 		assertEquals("Slide", CustomizeALotOverheadChatEffect.SLIDE.toString());
+	}
+
+	private static void assertChatOffset(int anchorX, int anchorY)
+	{
+		assertEquals(
+			10,
+			CustomizeALotOverheadChatRenderer.chatLeft(anchorX, 40, 10)
+				- CustomizeALotOverheadChatRenderer.chatLeft(anchorX, 40, 0));
+		assertEquals(
+			-10,
+			CustomizeALotOverheadChatRenderer.chatBaseline(
+				anchorY,
+				10)
+				- CustomizeALotOverheadChatRenderer.chatBaseline(
+					anchorY,
+					0));
+		assertEquals(
+			10,
+			anchorY - CustomizeALotOverheadChatRenderer.chatLaneTop(
+				anchorY,
+				12,
+				CustomizeALotOverheadChatEffect.STATIC));
 	}
 
 	private static BufferedImage drawStaticText(

@@ -16,7 +16,6 @@ import net.runelite.api.gameval.SpriteID;
 
 final class CustomizeALotHeadIconRenderer
 {
-	private static final BufferedImage ANCHOR_IMAGE = new BufferedImage(1, 1, BufferedImage.TYPE_INT_ARGB);
 	private static final int NPC_HINT_SPRITE_INDEX = 0;
 	private static final int PLAYER_HINT_SPRITE_INDEX = 1;
 
@@ -24,6 +23,7 @@ final class CustomizeALotHeadIconRenderer
 	private final CustomizeALotConfig config;
 	private final CustomizeALotActorUiSpriteCache sprites;
 	private final List<CustomizeALotSprite> iconBuffer = new ArrayList<>(4);
+	private Actor preparedActor;
 
 	@Inject
 	CustomizeALotHeadIconRenderer(
@@ -36,14 +36,25 @@ final class CustomizeALotHeadIconRenderer
 		this.sprites = sprites;
 	}
 
-	int render(Graphics2D graphics, Actor actor, int occupiedTopY)
+	int render(
+		Graphics2D graphics,
+		Actor actor,
+		Point anchor,
+		int stackAnchorY,
+		int occupiedTopY)
 	{
-		if (!config.headIconsEnabled())
+		prepare(actor);
+		return renderPrepared(graphics, actor, anchor, stackAnchorY, occupiedTopY);
+	}
+
+	boolean prepare(Actor actor)
+	{
+		clearPrepared();
+		if (!config.headIconsEnabled() || actor == null)
 		{
-			return occupiedTopY;
+			return false;
 		}
 
-		iconBuffer.clear();
 		if (actor instanceof Player)
 		{
 			addPlayerIcons(iconBuffer, (Player) actor);
@@ -56,19 +67,30 @@ final class CustomizeALotHeadIconRenderer
 		addHintArrow(iconBuffer, actor);
 		if (iconBuffer.isEmpty())
 		{
-			return occupiedTopY;
+			return false;
 		}
 
-		Point anchor = actor.getCanvasImageLocation(ANCHOR_IMAGE, actor.getLogicalHeight() + 15);
-		if (anchor == null)
+		preparedActor = actor;
+		return true;
+	}
+
+	int renderPrepared(
+		Graphics2D graphics,
+		Actor actor,
+		Point anchor,
+		int stackAnchorY,
+		int occupiedTopY)
+	{
+		if (actor != preparedActor || anchor == null || iconBuffer.isEmpty())
 		{
+			clearPrepared();
 			return occupiedTopY;
 		}
 
 		int percent = clampScalePercent(config.headIconScalePercent());
 		int spacing = Math.max(0, Math.min(20, config.headIconSpacing()));
 		int cursorBottomY = stackBottomY(
-			anchor.getY(),
+			stackAnchorY,
 			occupiedTopY,
 			config.headIconYOffset(),
 			spacing);
@@ -89,7 +111,10 @@ final class CustomizeALotHeadIconRenderer
 				int canvasHeight = scaled(icon.getMaxHeight(), percent);
 				int imageWidth = scaledSpan(icon.getOffsetX(), icon.getWidth(), percent);
 				int imageHeight = scaledSpan(icon.getOffsetY(), icon.getHeight(), percent);
-				int canvasX = anchor.getX() - canvasWidth / 2 + config.headIconXOffset();
+				int canvasX = iconLeft(
+					anchor.getX(),
+					canvasWidth,
+					config.headIconXOffset());
 				int canvasY = cursorBottomY - canvasHeight;
 				int imageX = canvasX + scaledEdge(icon.getOffsetX(), percent);
 				int imageY = canvasY + scaledEdge(icon.getOffsetY(), percent);
@@ -105,6 +130,7 @@ final class CustomizeALotHeadIconRenderer
 		finally
 		{
 			iconGraphics.dispose();
+			clearPrepared();
 		}
 
 		return occupiedTop;
@@ -182,6 +208,11 @@ final class CustomizeALotHeadIconRenderer
 		return Math.max(1, dimension * clampScalePercent(percent) / 100);
 	}
 
+	static int iconLeft(int anchorX, int canvasWidth, int xOffset)
+	{
+		return anchorX - canvasWidth / 2 + xOffset;
+	}
+
 	static int stackBottomY(int anchorY, int occupiedTopY, int yOffset, int spacing)
 	{
 		int bottomY = occupiedTopY == CustomizeALotHealthBarRenderer.NO_OCCUPIED_TOP
@@ -219,6 +250,13 @@ final class CustomizeALotHeadIconRenderer
 
 	void clearCache()
 	{
+		clearPrepared();
 		sprites.clear();
+	}
+
+	private void clearPrepared()
+	{
+		preparedActor = null;
+		iconBuffer.clear();
 	}
 }

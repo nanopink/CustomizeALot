@@ -54,6 +54,7 @@ public class CustomizeALotSectionPresetWorkflowTest
 		assertEquals(5.0,
 			((Number) values.get(CustomizeALotConfig.HEALTH_BAR_HEIGHT_KEY)).doubleValue(),
 			0.0);
+		assertEquals(2, values.get(CustomizeALotConfig.HEALTH_BAR_Y_OFFSET_KEY));
 		assertEquals(new Color(0xFF34F434, true),
 			values.get(CustomizeALotConfig.HEALTH_BAR_FRONT_COLOR_KEY));
 		assertEquals(new Color(0xFF18E418, true),
@@ -256,6 +257,15 @@ public class CustomizeALotSectionPresetWorkflowTest
 		assertEquals(6.0, previousHealth.get(CustomizeALotConfig.HEALTH_BAR_HEIGHT_KEY));
 		assertSame(CustomizeALotHealthScaleMode.FIXED,
 			previousHealth.get(CustomizeALotConfig.HEALTH_BAR_SCALE_MODE_KEY));
+
+		Map<String, Object> version2Health =
+			CustomizeALotHealthBarPreset.version2RuinedHeirSettings();
+		assertEquals(32, version2Health.size());
+		assertEquals(50.0, version2Health.get(CustomizeALotConfig.HEALTH_BAR_SOLID_WIDTH_KEY));
+		assertEquals(5.0, version2Health.get(CustomizeALotConfig.HEALTH_BAR_HEIGHT_KEY));
+		assertEquals(0, version2Health.get(CustomizeALotConfig.HEALTH_BAR_Y_OFFSET_KEY));
+		assertSame(CustomizeALotHealthScaleMode.THRESHOLD,
+			version2Health.get(CustomizeALotConfig.HEALTH_BAR_SCALE_MODE_KEY));
 	}
 
 	@Test

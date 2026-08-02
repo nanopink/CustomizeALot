@@ -20,7 +20,6 @@ import net.runelite.client.util.Text;
 
 final class CustomizeALotOverheadChatRenderer
 {
-	private static final int DEFAULT_Z_OFFSET = 40;
 	private static final int COMPONENT_GAP = 2;
 	private static final int PLAYER_CHAT_LIFETIME_CYCLES = 150;
 	private static final int NPC_CHAT_LIFETIME_CYCLES = 100;
@@ -70,18 +69,45 @@ final class CustomizeALotOverheadChatRenderer
 		return FontManager.getFallbackFont(family, fontStyle, Math.max(1, fontType.getSize()));
 	}
 
+	static boolean hasRenderableMessage(
+		Actor actor,
+		CustomizeALotLocalChatEffectTracker.MessageState messageState,
+		Style style,
+		Color textColor)
+	{
+		if (messageState == null || style == null || !style.shouldRender(actor instanceof NPC))
+		{
+			return false;
+		}
+
+		String overheadText = messageState.getText();
+		if (messageState.getOverheadCycle() <= 0
+			|| overheadText == null
+			|| displayText(overheadText).isEmpty())
+		{
+			return false;
+		}
+
+		Color effectiveColor = textColor == null ? style.color : textColor;
+		return effectiveColor.getAlpha() > 0
+			|| style.shadow && style.shadowColor.getAlpha() > 0;
+	}
+
 	void render(
 		Graphics2D graphics,
 		Actor actor,
+		Point actorTop,
 		CustomizeALotLocalChatEffectTracker.MessageState messageState,
 		Style style,
 		Color textColor,
 		CustomizeALotOverheadChatEffect effect,
 		int gameCycle,
 		int occupiedTopY,
+		int occupiedBottomY,
 		List<Rectangle> occupiedChatBounds)
 	{
-		if (messageState == null || style == null || !style.shouldRender(actor instanceof NPC))
+		if (actorTop == null
+			|| !hasRenderableMessage(actor, messageState, style, textColor))
 		{
 			return;
 		}
@@ -89,24 +115,8 @@ final class CustomizeALotOverheadChatRenderer
 		String overheadText = messageState.getText();
 		int overheadCycle = messageState.getOverheadCycle();
 		int chatLifetimeCycles = chatLifetimeCycles(actor);
-		if (overheadCycle <= 0 || overheadText == null || overheadText.isEmpty())
-		{
-			return;
-		}
-
 		String text = displayText(overheadText);
-		if (text.isEmpty())
-		{
-			return;
-		}
-
 		Color effectiveColor = textColor == null ? style.color : textColor;
-		Color effectiveShadowColor = style.shadowColor;
-		if (effectiveColor.getAlpha() == 0
-			&& (!style.shadow || effectiveShadowColor.getAlpha() == 0))
-		{
-			return;
-		}
 
 		CustomizeALotOverheadChatEffect effectiveEffect = effect == null
 			? CustomizeALotOverheadChatEffect.STATIC
@@ -116,18 +126,9 @@ final class CustomizeALotOverheadChatRenderer
 		try
 		{
 			graphics.setFont(style.font);
-			Point location = actor.getCanvasTextLocation(
-				graphics,
-				text,
-				actor.getLogicalHeight() + DEFAULT_Z_OFFSET);
-			if (location == null)
-			{
-				return;
-			}
-
-			int x = location.getX() + style.xOffset;
 			FontMetrics fontMetrics = graphics.getFontMetrics();
 			int textWidth = fontMetrics.stringWidth(text);
+			int x = chatLeft(actorTop.getX(), textWidth, style.xOffset);
 			GlyphVector animatedGlyphs = createAnimatedGlyphs(
 				graphics,
 				text,
@@ -135,12 +136,9 @@ final class CustomizeALotOverheadChatRenderer
 				gameCycle,
 				overheadCycle,
 				chatLifetimeCycles);
-			int y = baselineY(
-				location.getY(),
-				occupiedTopY,
-				fontMetrics.getDescent(),
-				style.yOffset,
-				effectiveEffect);
+			int y = chatBaseline(
+				actorTop.getY(),
+				style.yOffset);
 			y = collisionFreeBaseline(
 				x,
 				y,
@@ -148,6 +146,8 @@ final class CustomizeALotOverheadChatRenderer
 				fontMetrics.getAscent(),
 				fontMetrics.getDescent(),
 				effectiveEffect,
+				occupiedTopY,
+				occupiedBottomY,
 				occupiedChatBounds);
 			if (occupiedChatBounds != null)
 			{
@@ -178,6 +178,27 @@ final class CustomizeALotOverheadChatRenderer
 			graphics.setFont(oldFont);
 			graphics.setColor(oldColor);
 		}
+	}
+
+	static int chatLeft(int anchorX, int textWidth, int xOffset)
+	{
+		return anchorX - Math.max(0, textWidth) / 2 + xOffset;
+	}
+
+	static int chatLaneTop(
+		int actorTopY,
+		int ascent,
+		CustomizeALotOverheadChatEffect effect)
+	{
+		return actorTopY
+			+ COMPONENT_GAP
+			- Math.max(0, ascent)
+			- effectVerticalPadding(effect);
+	}
+
+	static int chatBaseline(int actorTopY, int yOffset)
+	{
+		return actorTopY + COMPONENT_GAP - yOffset;
 	}
 
 	static int chatLifetimeCycles(Actor actor)
@@ -281,34 +302,6 @@ final class CustomizeALotOverheadChatRenderer
 		}
 	}
 
-	static int baselineY(int preferredY, int occupiedTopY, int descent, int yOffset)
-	{
-		return baselineY(
-			preferredY,
-			occupiedTopY,
-			descent,
-			yOffset,
-			CustomizeALotOverheadChatEffect.STATIC);
-	}
-
-	static int baselineY(
-		int preferredY,
-		int occupiedTopY,
-		int descent,
-		int yOffset,
-		CustomizeALotOverheadChatEffect effect)
-	{
-		int baseline = occupiedTopY == CustomizeALotHealthBarRenderer.NO_OCCUPIED_TOP
-			? preferredY
-			: Math.min(
-				preferredY,
-				occupiedTopY
-					- COMPONENT_GAP
-					- Math.max(0, descent)
-					- effectVerticalPadding(effect));
-		return baseline - yOffset;
-	}
-
 	static int collisionFreeBaseline(
 		int x,
 		int preferredY,
@@ -324,6 +317,57 @@ final class CustomizeALotOverheadChatRenderer
 			ascent,
 			descent,
 			CustomizeALotOverheadChatEffect.STATIC,
+			occupiedBounds);
+	}
+
+	static int collisionFreeBaseline(
+		int x,
+		int preferredY,
+		int width,
+		int ascent,
+		int descent,
+		CustomizeALotOverheadChatEffect effect,
+		int occupiedTopY,
+		int occupiedBottomY,
+		List<Rectangle> occupiedBounds)
+	{
+		int baseline = collisionFreeBaseline(
+			x,
+			preferredY,
+			width,
+			ascent,
+			descent,
+			effect,
+			occupiedBounds);
+		if (baseline == preferredY
+			|| occupiedTopY == CustomizeALotHealthBarRenderer.NO_OCCUPIED_TOP
+			|| occupiedBottomY <= occupiedTopY)
+		{
+			return baseline;
+		}
+
+		Rectangle shiftedBounds = effectBounds(
+			x,
+			baseline,
+			width,
+			ascent,
+			descent,
+			effect);
+		int shiftedBottom = shiftedBounds.y + shiftedBounds.height;
+		if (shiftedBounds.y >= occupiedBottomY || shiftedBottom <= occupiedTopY)
+		{
+			return baseline;
+		}
+
+		int bottomOffset = shiftedBottom - baseline;
+		int aboveOwnUi = occupiedTopY - COMPONENT_GAP - bottomOffset;
+		return collisionFreeBaseline(
+			x,
+			aboveOwnUi,
+			width,
+			ascent,
+			descent,
+			effect,
 			occupiedBounds);
 	}
 

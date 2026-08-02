@@ -753,7 +753,7 @@ public interface CustomizeALotConfig extends Config
 	@Units(Units.PIXELS)
 	default int healthBarYOffset()
 	{
-		return 0;
+		return 2;
 	}
 
 	@ConfigItem(

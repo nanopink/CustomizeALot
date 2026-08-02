@@ -13,11 +13,14 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Function;
 import java.util.function.IntFunction;
+import java.util.function.Predicate;
 import javax.inject.Inject;
 import net.runelite.api.Actor;
 import net.runelite.api.Client;
 import net.runelite.api.NPC;
+import net.runelite.api.NPCComposition;
 import net.runelite.api.Point;
 import net.runelite.api.Player;
 import net.runelite.api.clan.ClanID;
@@ -36,10 +39,16 @@ public class CustomizeALotOverlay extends Overlay
 	private static final int SLOT_EDGE_CUT = 7;
 	private static final int CACHE_FAILURE_RETRY_CYCLES = 10;
 	private static final int MAX_TRANSFORM_DEPTH = 8;
+	private static final int NATIVE_UPPER_UI_HEIGHT_PADDING = 15;
+	// Native starts its upper-UI accumulator at -2; our shared layout subtracts
+	// a 2 px component gap, so +4 preserves the native zero-offset baseline.
+	private static final int NATIVE_STACK_CANVAS_ADJUSTMENT = 4;
 	private static final Comparator<Actor> ACTOR_RENDER_ORDER = Comparator
 		.comparingInt(CustomizeALotOverlay::actorTypeOrder)
 		.thenComparingInt(CustomizeALotOverlay::actorIndex)
 		.thenComparingInt(System::identityHashCode);
+	private static final Predicate<Integer> RETRY_FAILED_NPC_OVERHEAD_HEIGHT =
+		height -> height == CustomizeALotNpcOverheadHeight.LOAD_FAILED;
 
 	private final Client client;
 	private final CustomizeALotPlugin plugin;
@@ -54,8 +63,12 @@ public class CustomizeALotOverlay extends Overlay
 		new CustomizeALotRetryCache<>(CACHE_FAILURE_RETRY_CYCLES);
 	private final CustomizeALotRetryCache<Integer, CustomizeALotSprite> sprites =
 		new CustomizeALotRetryCache<>(CACHE_FAILURE_RETRY_CYCLES);
+	private final CustomizeALotRetryCache<Integer, Integer> npcOverheadHeights =
+		new CustomizeALotRetryCache<>(CACHE_FAILURE_RETRY_CYCLES);
 	private final IntFunction<CustomizeALotHitmarkDefinition> hitmarkDefinitionLoader =
 		this::loadDefinition;
+	private final Function<Integer, Integer> npcOverheadHeightLoader =
+		this::loadNpcOverheadHeight;
 	private final Map<Actor, SlotSize> actorSlotSizes = new HashMap<>();
 
 	@Inject
@@ -110,6 +123,7 @@ public class CustomizeALotOverlay extends Overlay
 			overlayGraphics.setFont(scaleFont(hitsplatFont, hitsplatScalePercent));
 			CustomizeALotOverheadChatRenderer.Style chatStyle =
 				CustomizeALotOverheadChatRenderer.captureStyle(config);
+			int chatAscent = overlayGraphics.getFontMetrics(chatStyle.getFont()).getAscent();
 			ClanSettings groupIronSettings = chatStyle.shouldRender(false)
 				&& chatStyle.usesRelationshipColors()
 				? client.getClanSettings(ClanID.GROUP_IRONMAN)
@@ -127,19 +141,21 @@ public class CustomizeALotOverlay extends Overlay
 					continue;
 				}
 
-				int occupiedTopY = healthBarRenderer.render(overlayGraphics, actor);
-				occupiedTopY = headIconRenderer.render(overlayGraphics, actor, occupiedTopY);
-				if (chatStyle.shouldRender(actor instanceof NPC))
+				boolean chatEnabled = chatStyle.shouldRender(actor instanceof NPC);
+				CustomizeALotLocalChatEffectTracker.MessageState messageState = null;
+				CustomizeALotOverheadChatEffect chatEffect = null;
+				Color chatColor = null;
+				boolean renderChat = false;
+				if (chatEnabled)
 				{
 					int chatLifetimeCycles = CustomizeALotOverheadChatRenderer.chatLifetimeCycles(actor);
-					CustomizeALotLocalChatEffectTracker.MessageState messageState =
-						localChatEffectTracker.messageStateFor(
-							actor,
-							actor.getOverheadText(),
-							actor.getOverheadCycle(),
-							gameCycle,
-							chatLifetimeCycles);
-					CustomizeALotOverheadChatEffect chatEffect = localChatEffectTracker.effectFor(
+					messageState = localChatEffectTracker.messageStateFor(
+						actor,
+						actor.getOverheadText(),
+						actor.getOverheadCycle(),
+						gameCycle,
+						chatLifetimeCycles);
+					chatEffect = localChatEffectTracker.effectFor(
 						actor,
 						messageState.getText(),
 						chatStyle.getFallbackEffect(),
@@ -156,20 +172,63 @@ public class CustomizeALotOverlay extends Overlay
 							groupIronSettings,
 							chatStyle);
 					}
-					Color chatColor = localChatEffectTracker.colorFor(
+					chatColor = localChatEffectTracker.colorFor(
 						actor,
 						messageState.getText(),
 						fallbackChatColor,
 						gameCycle);
+					renderChat = CustomizeALotOverheadChatRenderer.hasRenderableMessage(
+						actor,
+						messageState,
+						chatStyle,
+						chatColor);
+				}
+				// Height offsets are 3D model units. Project once here so every
+				// component gap and configured offset remains in canvas pixels.
+				boolean renderHealthBar = healthBarRenderer.hasRenderableHealthBar(actor);
+				boolean renderHeadIcons = headIconRenderer.prepare(actor);
+				Point actorTop = needsActorTop(
+					renderHealthBar,
+					renderHeadIcons,
+					renderChat)
+					? actorTopAnchor(actor, gameCycle)
+					: null;
+				int upperStackAnchorY = actorTop == null
+					? 0
+					: actorTop.getY();
+				if (actorTop != null && renderChat)
+				{
+					upperStackAnchorY = CustomizeALotOverheadChatRenderer.chatLaneTop(
+						actorTop.getY(),
+						chatAscent,
+						chatEffect);
+				}
+				int healthBarTopY = renderHealthBar
+					? healthBarRenderer.render(
+						overlayGraphics,
+						actor,
+						actorTop,
+						upperStackAnchorY)
+					: CustomizeALotHealthBarRenderer.NO_OCCUPIED_TOP;
+				int occupiedTopY = headIconRenderer.renderPrepared(
+					overlayGraphics,
+					actor,
+					actorTop,
+					upperStackAnchorY,
+					healthBarTopY);
+				if (renderChat)
+				{
 					overheadChatRenderer.render(
 						overlayGraphics,
 						actor,
+						actorTop,
 						messageState,
 						chatStyle,
 						chatColor,
 						chatEffect,
 						gameCycle,
 						occupiedTopY,
+						upperStackAnchorY,
 						occupiedChatBounds);
 				}
 
@@ -230,6 +289,69 @@ public class CustomizeALotOverlay extends Overlay
 		}
 
 		return true;
+	}
+
+	Point actorTopAnchor(Actor actor, int gameCycle)
+	{
+		if (actor == null)
+		{
+			return null;
+		}
+
+		Point projected = actor.getCanvasImageLocation(
+			ANCHOR_IMAGE,
+			actorProjectionHeight(actorBaseOverheadHeight(actor, gameCycle)));
+		return nativeStackAnchor(projected);
+	}
+
+	private int actorBaseOverheadHeight(Actor actor, int gameCycle)
+	{
+		int logicalHeight = actor.getLogicalHeight();
+		if (!(actor instanceof NPC))
+		{
+			return logicalHeight;
+		}
+
+		NPCComposition composition = ((NPC) actor).getComposition();
+		if (composition == null)
+		{
+			return logicalHeight;
+		}
+
+		int definitionHeight = npcOverheadHeights.get(
+			composition.getId(),
+			gameCycle,
+			npcOverheadHeightLoader,
+			RETRY_FAILED_NPC_OVERHEAD_HEIGHT);
+		return selectBaseOverheadHeight(logicalHeight, definitionHeight);
+	}
+
+	static int selectBaseOverheadHeight(int logicalHeight, int definitionHeight)
+	{
+		return definitionHeight >= 0 ? definitionHeight : logicalHeight;
+	}
+
+	static int actorProjectionHeight(int baseOverheadHeight)
+	{
+		// Actor projection already applies the animation height offset.
+		return baseOverheadHeight + NATIVE_UPPER_UI_HEIGHT_PADDING;
+	}
+
+	static Point nativeStackAnchor(Point projected)
+	{
+		return projected == null
+			? null
+			: new Point(
+				projected.getX(),
+				projected.getY() + NATIVE_STACK_CANVAS_ADJUSTMENT);
+	}
+
+	static boolean needsActorTop(
+		boolean renderHealthBar,
+		boolean renderHeadIcons,
+		boolean renderChat)
+	{
+		return renderHealthBar || renderHeadIcons || renderChat;
 	}
 
 	private static int actorTypeOrder(Actor actor)
@@ -508,6 +630,11 @@ public class CustomizeALotOverlay extends Overlay
 			CustomizeALotHitmarkDefinition::isFallbackDefinition);
 	}
 
+	private Integer loadNpcOverheadHeight(Integer npcDefinitionId)
+	{
+		return CustomizeALotNpcOverheadHeight.load(client, npcDefinitionId);
+	}
+
 	CustomizeALotSprite getSprite(int spriteId)
 	{
 		if (spriteId < 0)
@@ -540,6 +667,7 @@ public class CustomizeALotOverlay extends Overlay
 	{
 		hitmarkDefinitions.clear();
 		sprites.clear();
+		npcOverheadHeights.clear();
 		actorSlotSizes.clear();
 		healthBarRenderer.clearCache();
 		headIconRenderer.clearCache();

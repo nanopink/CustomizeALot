@@ -28,7 +28,7 @@ public class CustomizeALotActorUiConfigTest
 		assertEquals(50.0, config.healthBarSolidWidth(), 0.0);
 		assertEquals(5.0, config.healthBarHeight(), 0.0);
 		assertEquals(0, config.healthBarXOffset());
-		assertEquals(0, config.healthBarYOffset());
+		assertEquals(2, config.healthBarYOffset());
 		assertEquals(
 			CustomizeALotHealthBarFillDirection.LEFT_TO_RIGHT,
 			config.healthBarFillDirection());

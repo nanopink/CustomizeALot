@@ -29,6 +29,13 @@ public class CustomizeALotHeadIconRendererTest
 	}
 
 	@Test
+	public void configuredOffsetsStayConstantAcrossProjectedActorPositions()
+	{
+		assertHeadIconOffset(210, 380);
+		assertHeadIconOffset(470, 125);
+	}
+
+	@Test
 	public void spacingMovesTheFirstIconAwayFromContentBelowIt()
 	{
 		assertEquals(
@@ -66,5 +73,37 @@ public class CustomizeALotHeadIconRendererTest
 		assertEquals(80, CustomizeALotHeadIconRenderer.nextIconBottomY(80, 0));
 		assertEquals(72, CustomizeALotHeadIconRenderer.nextIconBottomY(80, 8));
 		assertEquals(60, CustomizeALotHeadIconRenderer.nextIconBottomY(80, 99));
+	}
+
+	private static void assertHeadIconOffset(int anchorX, int anchorY)
+	{
+		assertEquals(
+			10,
+			CustomizeALotHeadIconRenderer.iconLeft(anchorX, 24, 10)
+				- CustomizeALotHeadIconRenderer.iconLeft(anchorX, 24, 0));
+		assertEquals(
+			-10,
+			CustomizeALotHeadIconRenderer.stackBottomY(
+				anchorY,
+				CustomizeALotHealthBarRenderer.NO_OCCUPIED_TOP,
+				10,
+				2)
+				- CustomizeALotHeadIconRenderer.stackBottomY(
+					anchorY,
+					CustomizeALotHealthBarRenderer.NO_OCCUPIED_TOP,
+					0,
+					2));
+		assertEquals(
+			-10,
+			CustomizeALotHeadIconRenderer.stackBottomY(
+				anchorY,
+				anchorY - 20,
+				10,
+				2)
+				- CustomizeALotHeadIconRenderer.stackBottomY(
+					anchorY,
+					anchorY - 20,
+					0,
+					2));
 	}
 }
