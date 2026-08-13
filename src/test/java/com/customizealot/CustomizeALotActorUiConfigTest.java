@@ -89,6 +89,7 @@ public class CustomizeALotActorUiConfigTest
 	{
 		assertTrue(config.headIconsEnabled());
 		assertTrue(config.showPrayerIcons());
+		assertTrue(config.showPrayerIconBackground());
 		assertTrue(config.showSkullIcons());
 		assertTrue(config.showNpcIcons());
 		assertTrue(config.showHintArrows());

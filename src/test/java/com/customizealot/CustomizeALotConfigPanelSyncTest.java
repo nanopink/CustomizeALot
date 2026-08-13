@@ -52,6 +52,9 @@ public class CustomizeALotConfigPanelSyncTest
 
 		JSpinner headIconScale = intSpinner(100);
 		row(headIcons, "Scale", headIconScale);
+		JCheckBox prayerBackground = new JCheckBox();
+		prayerBackground.setSelected(true);
+		row(headIcons, "Prayer background", prayerBackground);
 
 		Color updatedColor = new Color(12, 34, 56, 78);
 		Map<String, Object> values = new LinkedHashMap<>();
@@ -64,8 +67,9 @@ public class CustomizeALotConfigPanelSyncTest
 		values.put(CustomizeALotConfig.HEALTH_BAR_FRONT_GRADIENT_KEY,
 			CustomizeALotHealthBarGradient.HORIZONTAL);
 		values.put(CustomizeALotConfig.HEALTH_BAR_FRONT_COLOR_KEY, updatedColor);
+		values.put(CustomizeALotConfig.SHOW_PRAYER_ICON_BACKGROUND_KEY, false);
 
-		assertEquals(8, CustomizeALotConfigPanelSync.synchronize(root, values));
+		assertEquals(9, CustomizeALotConfigPanelSync.synchronize(root, values));
 		assertSame(CustomizeALotPreset.CUSTOM, hitsplatPreset.getSelectedItem());
 		assertEquals(100, hitsplatScale.getValue());
 		assertEquals(150, healthScale.getValue());
@@ -77,6 +81,7 @@ public class CustomizeALotConfigPanelSyncTest
 		assertEquals(updatedColor, frontColor.getColor());
 		assertEquals("#4E0C2238", frontColor.getText());
 		assertEquals(100, headIconScale.getValue());
+		assertFalse(prayerBackground.isSelected());
 		assertTrue(CustomizeALotConfigPanelSync.spinnerHasValue(
 			root,
 			CustomizeALotConfig.HEALTH_BAR_SOLID_WIDTH_KEY,

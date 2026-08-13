@@ -1,5 +1,6 @@
 package com.customizealot;
 
+import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
 import java.util.HashMap;
 import java.util.Map;
@@ -10,6 +11,7 @@ import javax.inject.Inject;
 import javax.inject.Singleton;
 import net.runelite.api.Client;
 import net.runelite.api.SpritePixels;
+import net.runelite.api.gameval.SpriteID;
 
 @Singleton
 final class CustomizeALotActorUiSpriteCache
@@ -18,22 +20,35 @@ final class CustomizeALotActorUiSpriteCache
 
 	private final IntSupplier gameCycleSupplier;
 	private final IntFunction<SpriteSource[]> groupLoader;
+	private final Supplier<Map<Integer, SpritePixels>> spriteOverrides;
 	private final Map<Integer, SpriteGroup> groups = new HashMap<>();
+	private final Map<Integer, ResourcePackSprite> resourcePackSprites = new HashMap<>();
+	private final Map<Integer, ResourcePackPrayerSprite> resourcePackPrayerSprites = new HashMap<>();
 
 	@Inject
 	CustomizeALotActorUiSpriteCache(Client client)
 	{
 		this(
 			() -> safeGameCycle(client),
-			archiveId -> loadGroup(client, archiveId));
+			archiveId -> loadGroup(client, archiveId),
+			client::getSpriteOverrides);
 	}
 
 	CustomizeALotActorUiSpriteCache(
 		IntSupplier gameCycleSupplier,
 		IntFunction<SpriteSource[]> groupLoader)
 	{
+		this(gameCycleSupplier, groupLoader, () -> null);
+	}
+
+	CustomizeALotActorUiSpriteCache(
+		IntSupplier gameCycleSupplier,
+		IntFunction<SpriteSource[]> groupLoader,
+		Supplier<Map<Integer, SpritePixels>> spriteOverrides)
+	{
 		this.gameCycleSupplier = gameCycleSupplier;
 		this.groupLoader = groupLoader;
+		this.spriteOverrides = spriteOverrides;
 	}
 
 	CustomizeALotSprite get(int archiveId, int spriteIndex)
@@ -61,9 +76,163 @@ final class CustomizeALotActorUiSpriteCache
 			() -> groupLoader.apply(archiveId));
 	}
 
+	CustomizeALotSprite getResourcePackOverride(int spriteId)
+	{
+		if (spriteId < 0)
+		{
+			return null;
+		}
+
+		SpritePixels source;
+		try
+		{
+			Map<Integer, SpritePixels> overrides = spriteOverrides.get();
+			source = overrides == null ? null : overrides.get(spriteId);
+		}
+		catch (RuntimeException ex)
+		{
+			return null;
+		}
+
+		if (source == null)
+		{
+			resourcePackSprites.remove(spriteId);
+			return null;
+		}
+
+		ResourcePackSprite cached = resourcePackSprites.get(spriteId);
+		if (cached != null && cached.source == source)
+		{
+			return cached.sprite;
+		}
+
+		CustomizeALotSprite converted = new SpriteSource(source).load();
+		if (converted == null)
+		{
+			resourcePackSprites.remove(spriteId);
+			return null;
+		}
+
+		resourcePackSprites.put(spriteId, new ResourcePackSprite(source, converted));
+		return converted;
+	}
+
+	CustomizeALotSprite getPrayerIcon(
+		int prayerIndex,
+		int resourcePackSpriteId,
+		boolean showBackground)
+	{
+		CustomizeALotSprite foreground = getResourcePackOverride(resourcePackSpriteId);
+		if (foreground == null)
+		{
+			resourcePackPrayerSprites.remove(prayerIndex);
+			return get(SpriteID.HEADICONS_PRAYER, prayerIndex);
+		}
+		if (!showBackground)
+		{
+			return foreground;
+		}
+
+		CustomizeALotSprite background = getResourcePackOverride(SpriteID.Prayerglow.ACTIVATED);
+		if (background == null)
+		{
+			background = get(SpriteID.Prayerglow.ACTIVATED, 0);
+		}
+		if (background == null)
+		{
+			resourcePackPrayerSprites.remove(prayerIndex);
+			return foreground;
+		}
+
+		ResourcePackPrayerSprite cached = resourcePackPrayerSprites.get(prayerIndex);
+		if (cached != null
+			&& cached.background == background
+			&& cached.foreground == foreground)
+		{
+			return cached.sprite;
+		}
+
+		CustomizeALotSprite composed = composePrayerIcon(background, foreground);
+		if (composed == null)
+		{
+			resourcePackPrayerSprites.remove(prayerIndex);
+			return foreground;
+		}
+
+		resourcePackPrayerSprites.put(
+			prayerIndex,
+			new ResourcePackPrayerSprite(background, foreground, composed));
+		return composed;
+	}
+
 	void clear()
 	{
 		groups.clear();
+		resourcePackSprites.clear();
+		resourcePackPrayerSprites.clear();
+	}
+
+	private static CustomizeALotSprite composePrayerIcon(
+		CustomizeALotSprite background,
+		CustomizeALotSprite foreground)
+	{
+		int backgroundWidth = logicalWidth(background);
+		int backgroundHeight = logicalHeight(background);
+		int foregroundWidth = logicalWidth(foreground);
+		int foregroundHeight = logicalHeight(foreground);
+		int canvasWidth = Math.max(backgroundWidth, foregroundWidth);
+		int canvasHeight = Math.max(backgroundHeight, foregroundHeight);
+		if (canvasWidth <= 0 || canvasHeight <= 0)
+		{
+			return null;
+		}
+
+		try
+		{
+			BufferedImage canvas = new BufferedImage(
+				canvasWidth,
+				canvasHeight,
+				BufferedImage.TYPE_INT_ARGB);
+			Graphics2D graphics = canvas.createGraphics();
+			try
+			{
+				drawCentered(graphics, background, canvasWidth, canvasHeight);
+				drawCentered(graphics, foreground, canvasWidth, canvasHeight);
+			}
+			finally
+			{
+				graphics.dispose();
+			}
+
+			return new CustomizeALotSprite(canvas, 0, 0);
+		}
+		catch (RuntimeException ex)
+		{
+			return null;
+		}
+	}
+
+	private static int logicalWidth(CustomizeALotSprite sprite)
+	{
+		return Math.max(sprite.getMaxWidth(), sprite.getOffsetX() + sprite.getWidth());
+	}
+
+	private static int logicalHeight(CustomizeALotSprite sprite)
+	{
+		return Math.max(sprite.getMaxHeight(), sprite.getOffsetY() + sprite.getHeight());
+	}
+
+	private static void drawCentered(
+		Graphics2D graphics,
+		CustomizeALotSprite sprite,
+		int canvasWidth,
+		int canvasHeight)
+	{
+		int logicalWidth = logicalWidth(sprite);
+		int logicalHeight = logicalHeight(sprite);
+		int x = (canvasWidth - logicalWidth) / 2 + sprite.getOffsetX();
+		int y = (canvasHeight - logicalHeight) / 2 + sprite.getOffsetY();
+		graphics.drawImage(sprite.getImage(), x, y, null);
 	}
 
 	private static SpriteSource[] loadGroup(Client client, int archiveId)
@@ -146,6 +315,35 @@ final class CustomizeALotActorUiSpriteCache
 					spritePixels.getMaxHeight(),
 					spritePixels.getOffsetX(),
 					spritePixels.getOffsetY());
+		}
+	}
+
+	private static final class ResourcePackSprite
+	{
+		private final SpritePixels source;
+		private final CustomizeALotSprite sprite;
+
+		private ResourcePackSprite(SpritePixels source, CustomizeALotSprite sprite)
+		{
+			this.source = source;
+			this.sprite = sprite;
+		}
+	}
+
+	private static final class ResourcePackPrayerSprite
+	{
+		private final CustomizeALotSprite background;
+		private final CustomizeALotSprite foreground;
+		private final CustomizeALotSprite sprite;
+
+		private ResourcePackPrayerSprite(
+			CustomizeALotSprite background,
+			CustomizeALotSprite foreground,
+			CustomizeALotSprite sprite)
+		{
+			this.background = background;
+			this.foreground = foreground;
+			this.sprite = sprite;
 		}
 	}
 

@@ -18,6 +18,15 @@ final class CustomizeALotHeadIconRenderer
 {
 	private static final int NPC_HINT_SPRITE_INDEX = 0;
 	private static final int PLAYER_HINT_SPRITE_INDEX = 1;
+	private static final int[] RESOURCE_PACK_PRAYER_SPRITE_IDS =
+	{
+		SpriteID.Prayeron.PROTECT_FROM_MELEE,
+		SpriteID.Prayeron.PROTECT_FROM_MISSILES,
+		SpriteID.Prayeron.PROTECT_FROM_MAGIC,
+		SpriteID.Prayeron.RETRIBUTION,
+		SpriteID.Prayeron.SMITE,
+		SpriteID.Prayeron.REDEMPTION
+	};
 
 	private final Client client;
 	private final CustomizeALotConfig config;
@@ -148,7 +157,7 @@ final class CustomizeALotHeadIconRenderer
 			HeadIcon prayer = player.getOverheadIcon();
 			if (prayer != null)
 			{
-				add(icons, sprites.get(SpriteID.HEADICONS_PRAYER, prayer.ordinal()));
+				add(icons, getPrayerIcon(prayer.ordinal()));
 			}
 		}
 	}
@@ -173,9 +182,26 @@ final class CustomizeALotHeadIconRenderer
 			int spriteId = spriteIds[i];
 			if (archiveIds[i] >= 0 && spriteId >= 0)
 			{
-				add(icons, sprites.get(archiveIds[i], spriteId));
+				add(icons, archiveIds[i] == SpriteID.HEADICONS_PRAYER
+					? getPrayerIcon(spriteId)
+					: sprites.get(archiveIds[i], spriteId));
 			}
 		}
+	}
+
+	private CustomizeALotSprite getPrayerIcon(int prayerIndex)
+	{
+		return sprites.getPrayerIcon(
+			prayerIndex,
+			resourcePackPrayerSpriteId(prayerIndex),
+			config.showPrayerIconBackground());
+	}
+
+	static int resourcePackPrayerSpriteId(int prayerIndex)
+	{
+		return prayerIndex >= 0 && prayerIndex < RESOURCE_PACK_PRAYER_SPRITE_IDS.length
+			? RESOURCE_PACK_PRAYER_SPRITE_IDS[prayerIndex]
+			: -1;
 	}
 
 	private void addHintArrow(List<CustomizeALotSprite> icons, Actor actor)

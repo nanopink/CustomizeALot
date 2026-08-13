@@ -2,6 +2,7 @@ package com.customizealot;
 
 import static org.junit.Assert.assertEquals;
 
+import net.runelite.api.gameval.SpriteID;
 import org.junit.Test;
 
 public class CustomizeALotHeadIconRendererTest
@@ -73,6 +74,25 @@ public class CustomizeALotHeadIconRendererTest
 		assertEquals(80, CustomizeALotHeadIconRenderer.nextIconBottomY(80, 0));
 		assertEquals(72, CustomizeALotHeadIconRenderer.nextIconBottomY(80, 8));
 		assertEquals(60, CustomizeALotHeadIconRenderer.nextIconBottomY(80, 99));
+	}
+
+	@Test
+	public void mapsStandardOverheadPrayersToActiveResourcePackSprites()
+	{
+		assertEquals(SpriteID.Prayeron.PROTECT_FROM_MELEE,
+			CustomizeALotHeadIconRenderer.resourcePackPrayerSpriteId(0));
+		assertEquals(SpriteID.Prayeron.PROTECT_FROM_MISSILES,
+			CustomizeALotHeadIconRenderer.resourcePackPrayerSpriteId(1));
+		assertEquals(SpriteID.Prayeron.PROTECT_FROM_MAGIC,
+			CustomizeALotHeadIconRenderer.resourcePackPrayerSpriteId(2));
+		assertEquals(SpriteID.Prayeron.RETRIBUTION,
+			CustomizeALotHeadIconRenderer.resourcePackPrayerSpriteId(3));
+		assertEquals(SpriteID.Prayeron.SMITE,
+			CustomizeALotHeadIconRenderer.resourcePackPrayerSpriteId(4));
+		assertEquals(SpriteID.Prayeron.REDEMPTION,
+			CustomizeALotHeadIconRenderer.resourcePackPrayerSpriteId(5));
+		assertEquals(-1, CustomizeALotHeadIconRenderer.resourcePackPrayerSpriteId(-1));
+		assertEquals(-1, CustomizeALotHeadIconRenderer.resourcePackPrayerSpriteId(6));
 	}
 
 	private static void assertHeadIconOffset(int anchorX, int anchorY)

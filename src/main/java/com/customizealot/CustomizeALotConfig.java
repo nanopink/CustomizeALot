@@ -109,6 +109,7 @@ public interface CustomizeALotConfig extends Config
 	String HEAD_ICONS_ENABLED_KEY = "headIconsEnabled";
 	String HEAD_ICON_PRESET_KEY = "headIconPreset";
 	String SHOW_PRAYER_ICONS_KEY = "showPrayerIcons";
+	String SHOW_PRAYER_ICON_BACKGROUND_KEY = "showPrayerIconBackground";
 	String SHOW_SKULL_ICONS_KEY = "showSkullIcons";
 	String SHOW_NPC_ICONS_KEY = "showNpcIcons";
 	String SHOW_HINT_ARROWS_KEY = "showHintArrows";
@@ -1283,7 +1284,7 @@ public interface CustomizeALotConfig extends Config
 	@ConfigItem(
 		keyName = HEAD_ICON_PRESET_KEY,
 		name = "Preset",
-		description = "Copies the head-icon visibility, scale, offsets, and spacing settings below once. Editing a copied setting changes this section to Custom.",
+		description = "Copies the head-icon visibility, prayer background, scale, offsets, and spacing settings below once. Editing a copied setting changes this section to Custom.",
 		section = HEAD_ICONS_SECTION,
 		position = 0
 	)
@@ -1305,11 +1306,23 @@ public interface CustomizeALotConfig extends Config
 	}
 
 	@ConfigItem(
+		keyName = SHOW_PRAYER_ICON_BACKGROUND_KEY,
+		name = "Prayer background",
+		description = "Draw the background behind supported Resource Pack overhead-prayer textures. Native prayer icons already include their background.",
+		section = HEAD_ICONS_SECTION,
+		position = 2
+	)
+	default boolean showPrayerIconBackground()
+	{
+		return true;
+	}
+
+	@ConfigItem(
 		keyName = SHOW_SKULL_ICONS_KEY,
 		name = "Skull icons",
 		description = "Show player skull icons.",
 		section = HEAD_ICONS_SECTION,
-		position = 2
+		position = 3
 	)
 	default boolean showSkullIcons()
 	{
@@ -1321,7 +1334,7 @@ public interface CustomizeALotConfig extends Config
 		name = "NPC icons",
 		description = "Show NPC overhead icons.",
 		section = HEAD_ICONS_SECTION,
-		position = 3
+		position = 4
 	)
 	default boolean showNpcIcons()
 	{
@@ -1333,7 +1346,7 @@ public interface CustomizeALotConfig extends Config
 		name = "Hint arrows",
 		description = "Show actor hint arrows.",
 		section = HEAD_ICONS_SECTION,
-		position = 4
+		position = 5
 	)
 	default boolean showHintArrows()
 	{
@@ -1345,7 +1358,7 @@ public interface CustomizeALotConfig extends Config
 		name = "Scale",
 		description = "Head-icon scale as a percentage of normal size.",
 		section = HEAD_ICONS_SECTION,
-		position = 5
+		position = 6
 	)
 	@Units(Units.PERCENT)
 	@Range(
@@ -1362,7 +1375,7 @@ public interface CustomizeALotConfig extends Config
 		name = "X offset",
 		description = "Horizontal head-icon offset in pixels.",
 		section = HEAD_ICONS_SECTION,
-		position = 6
+		position = 7
 	)
 	@Range(
 		min = -256,
@@ -1379,7 +1392,7 @@ public interface CustomizeALotConfig extends Config
 		name = "Y offset",
 		description = "Vertical head-icon offset in pixels. Positive values move icons upward.",
 		section = HEAD_ICONS_SECTION,
-		position = 7
+		position = 8
 	)
 	@Range(
 		min = -256,
@@ -1396,7 +1409,7 @@ public interface CustomizeALotConfig extends Config
 		name = "Spacing",
 		description = "Gap below the first head icon and between each stacked icon, in pixels.",
 		section = HEAD_ICONS_SECTION,
-		position = 8
+		position = 9
 	)
 	@Range(
 		min = 0,

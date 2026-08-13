@@ -1272,6 +1272,8 @@ public class CustomizeALotPlugin extends Plugin
 
 		Map<String, Object> values = new LinkedHashMap<>();
 		values.put(CustomizeALotConfig.SHOW_PRAYER_ICONS_KEY, config.showPrayerIcons());
+		values.put(CustomizeALotConfig.SHOW_PRAYER_ICON_BACKGROUND_KEY,
+			config.showPrayerIconBackground());
 		values.put(CustomizeALotConfig.SHOW_SKULL_ICONS_KEY, config.showSkullIcons());
 		values.put(CustomizeALotConfig.SHOW_NPC_ICONS_KEY, config.showNpcIcons());
 		values.put(CustomizeALotConfig.SHOW_HINT_ARROWS_KEY, config.showHintArrows());

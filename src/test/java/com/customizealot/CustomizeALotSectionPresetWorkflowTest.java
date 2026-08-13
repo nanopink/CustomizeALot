@@ -113,7 +113,9 @@ public class CustomizeALotSectionPresetWorkflowTest
 			chat.get(CustomizeALotConfig.OVERHEAD_CHAT_GROUP_IRON_COLOR_KEY));
 		assertFalse(chat.containsKey(CustomizeALotConfig.OVERHEAD_CHAT_ENABLED_KEY));
 
-		assertEquals(8, icons.size());
+		assertEquals(9, icons.size());
+		assertEquals(true,
+			icons.get(CustomizeALotConfig.SHOW_PRAYER_ICON_BACKGROUND_KEY));
 		assertEquals(100, icons.get(CustomizeALotConfig.HEAD_ICON_SCALE_PERCENT_KEY));
 		assertEquals(2, icons.get(CustomizeALotConfig.HEAD_ICON_SPACING_KEY));
 		assertFalse(icons.containsKey(CustomizeALotConfig.HEAD_ICONS_ENABLED_KEY));
@@ -158,6 +160,18 @@ public class CustomizeALotSectionPresetWorkflowTest
 			CustomizeALotOverheadChatPreset.RUINED_HEIR, config));
 		assertTrue(CustomizeALotPlugin.headIconPresetMatchesConfig(
 			CustomizeALotHeadIconPreset.RUNESCAPE, config));
+
+		CustomizeALotConfig withoutPrayerBackground = new CustomizeALotConfig()
+		{
+			@Override
+			public boolean showPrayerIconBackground()
+			{
+				return false;
+			}
+		};
+		assertFalse(CustomizeALotPlugin.headIconPresetMatchesConfig(
+			CustomizeALotHeadIconPreset.RUNESCAPE,
+			withoutPrayerBackground));
 	}
 
 	@Test
@@ -341,6 +355,10 @@ public class CustomizeALotSectionPresetWorkflowTest
 		assertTrue(CustomizeALotPlugin.shouldSwitchHeadIconToCustom(
 			false,
 			CustomizeALotConfig.HEAD_ICON_SPACING_KEY,
+			CustomizeALotHeadIconPreset.RUNESCAPE));
+		assertTrue(CustomizeALotPlugin.shouldSwitchHeadIconToCustom(
+			false,
+			CustomizeALotConfig.SHOW_PRAYER_ICON_BACKGROUND_KEY,
 			CustomizeALotHeadIconPreset.RUNESCAPE));
 
 		assertFalse(CustomizeALotPlugin.shouldSwitchHealthBarToCustom(

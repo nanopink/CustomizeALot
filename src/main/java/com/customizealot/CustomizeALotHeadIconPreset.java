@@ -29,6 +29,7 @@ public enum CustomizeALotHeadIconPreset
 	{
 		Map<String, Object> values = new LinkedHashMap<>();
 		values.put(CustomizeALotConfig.SHOW_PRAYER_ICONS_KEY, true);
+		values.put(CustomizeALotConfig.SHOW_PRAYER_ICON_BACKGROUND_KEY, true);
 		values.put(CustomizeALotConfig.SHOW_SKULL_ICONS_KEY, true);
 		values.put(CustomizeALotConfig.SHOW_NPC_ICONS_KEY, true);
 		values.put(CustomizeALotConfig.SHOW_HINT_ARROWS_KEY, true);

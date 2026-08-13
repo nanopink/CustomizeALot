@@ -485,6 +485,7 @@ final class CustomizeALotConfigPanelSync
 
 		field(fields, HEAD_ICONS_SECTION, "Preset", CustomizeALotConfig.HEAD_ICON_PRESET_KEY);
 		field(fields, HEAD_ICONS_SECTION, "Prayer icons", CustomizeALotConfig.SHOW_PRAYER_ICONS_KEY);
+		field(fields, HEAD_ICONS_SECTION, "Prayer background", CustomizeALotConfig.SHOW_PRAYER_ICON_BACKGROUND_KEY);
 		field(fields, HEAD_ICONS_SECTION, "Skull icons", CustomizeALotConfig.SHOW_SKULL_ICONS_KEY);
 		field(fields, HEAD_ICONS_SECTION, "NPC icons", CustomizeALotConfig.SHOW_NPC_ICONS_KEY);
 		field(fields, HEAD_ICONS_SECTION, "Hint arrows", CustomizeALotConfig.SHOW_HINT_ARROWS_KEY);
