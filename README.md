@@ -48,6 +48,6 @@ Style player and NPC chat with fonts, colors, shadows, positioning, and animated
 
 Hitsplats, health bars, overhead chat, and head icons each start with a `RuneScape` preset. Choose another preset to apply its look. Adjusting one of its settings switches that section to `Custom` automatically, so you can mix styles freely.
 
-<summary>Compatibility notes</summary>
+### Compatibility
 
 While enabled, the plugin replaces RuneScape's original hitsplats, health bars, overhead chat, and head icons, this is to avoid having to maintain an old system, why maintain an old system when we can rebuild it better than ever before!
