@@ -1,5 +1,3 @@
-Found a bug? [Open an issue](https://github.com/nanopink/CustomizeALot/issues) and we'll take a look.
-
 # Customize a Lot
 
 Customize hitsplats, health bars, overhead chat, and head icons for players and NPCs.
@@ -44,10 +42,8 @@ Style player and NPC chat with fonts, colors, shadows, positioning, and animated
 
 <img width="542" height="339" alt="Overhead chat using a custom font and wave effect" src="https://github.com/user-attachments/assets/9fa8a004-815e-4da9-ae26-3dd4a50bd2c6" />
 
-## Start with a preset
+## Compatibility
 
-Hitsplats, health bars, overhead chat, and head icons each start with a `RuneScape` preset. Choose another preset to apply its look. Adjusting one of its settings switches that section to `Custom` automatically, so you can mix styles freely.
+Customize a Lot replaces RuneScape's original hitsplats, health bars, overhead chat, and head icons with fully customizable versions. Because these elements are rebuilt, some encounter-specific displays or plugins that depend on the originals may look different or overlap. Other players' chat colors and effects cannot always be reproduced exactly.
 
-### Compatibility
-
-While enabled, the plugin replaces RuneScape's original hitsplats, health bars, overhead chat, and head icons, this is to avoid having to maintain an old system, why maintain an old system when we can rebuild it better than ever before!
+Found a bug? [Open an issue](https://github.com/nanopink/CustomizeALot/issues) and we'll take a look.
