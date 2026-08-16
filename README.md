@@ -10,9 +10,9 @@ Resize and reposition prayers, skulls, NPC overhead icons, and target hints, wit
 
 Now with resource pack support.
 
-<img width="374" height="532" alt="image" src="https://github.com/user-attachments/assets/df5d15ac-f737-468d-b16a-57912587062a" />
+<img width="474" alt="image" src="https://github.com/user-attachments/assets/df5d15ac-f737-468d-b16a-57912587062a" />
 
-<img width="374" height="372" alt="Enlarged Protect from Melee prayer icon above a player" src="https://github.com/user-attachments/assets/89f41192-a5da-4a20-b3f8-490eed067f4b" />
+<img width="274" alt="Enlarged Protect from Melee prayer icon above a player" src="https://github.com/user-attachments/assets/89f41192-a5da-4a20-b3f8-490eed067f4b" />
 
 ## Hitsplats
 
