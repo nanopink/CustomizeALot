@@ -2,6 +2,11 @@
 
 Customize hitsplats, health bars, overhead chat, and head icons for players and NPCs.
 
+[![Support development on Ko-fi 🩷](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/nanopink)
+
+*This plugin is free and open source. Support is optional and helps me spend more time maintaining, improving, and
+creating RuneLite plugins. All features remain available to everyone.*
+
 ## Prayer icons
 
 Resize and reposition prayers, skulls, NPC overhead icons, and target hints, with control over the spacing between them.
