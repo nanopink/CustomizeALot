@@ -187,11 +187,15 @@ public class CustomizeALotOverlay extends Overlay
 				// component gap and configured offset remains in canvas pixels.
 				boolean renderHealthBar = healthBarRenderer.hasRenderableHealthBar(actor);
 				boolean renderHeadIcons = headIconRenderer.prepare(actor);
-				Point actorTop = needsActorTop(
+				boolean projectActorTop = needsActorTop(
 					renderHealthBar,
 					renderHeadIcons,
-					renderChat)
-					? actorTopAnchor(actor, gameCycle)
+					renderChat);
+				int projectionHeight = projectActorTop
+					? actorProjectionHeight(actorBaseOverheadHeight(actor, gameCycle))
+					: 0;
+				Point actorTop = projectActorTop
+					? actorTopAnchor(actor, projectionHeight)
 					: null;
 				int upperStackAnchorY = actorTop == null
 					? 0
@@ -213,6 +217,7 @@ public class CustomizeALotOverlay extends Overlay
 				int occupiedTopY = headIconRenderer.renderPrepared(
 					overlayGraphics,
 					actor,
+					projectionHeight,
 					actorTop,
 					upperStackAnchorY,
 					healthBarTopY);
@@ -291,7 +296,7 @@ public class CustomizeALotOverlay extends Overlay
 		return true;
 	}
 
-	Point actorTopAnchor(Actor actor, int gameCycle)
+	Point actorTopAnchor(Actor actor, int projectionHeight)
 	{
 		if (actor == null)
 		{
@@ -300,7 +305,7 @@ public class CustomizeALotOverlay extends Overlay
 
 		Point projected = actor.getCanvasImageLocation(
 			ANCHOR_IMAGE,
-			actorProjectionHeight(actorBaseOverheadHeight(actor, gameCycle)));
+			projectionHeight);
 		return nativeStackAnchor(projected);
 	}
 

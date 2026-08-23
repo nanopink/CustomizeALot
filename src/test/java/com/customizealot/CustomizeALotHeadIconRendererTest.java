@@ -8,11 +8,64 @@ import org.junit.Test;
 public class CustomizeALotHeadIconRendererTest
 {
 	@Test
-	public void scalesIconsWithinSupportedRange()
+	public void scalesIconsAcrossDynamicRenderRange()
 	{
-		assertEquals(12, CustomizeALotHeadIconRenderer.scaled(24, 10));
+		assertEquals(2, CustomizeALotHeadIconRenderer.scaled(24, 10));
 		assertEquals(24, CustomizeALotHeadIconRenderer.scaled(24, 100));
-		assertEquals(48, CustomizeALotHeadIconRenderer.scaled(24, 500));
+		assertEquals(96, CustomizeALotHeadIconRenderer.scaled(24, 500));
+	}
+
+	@Test
+	public void perspectiveMagnificationShrinksAndEnlargesConfiguredScale()
+	{
+		assertEquals(50, CustomizeALotHeadIconRenderer.effectiveScalePercent(
+			100, true, 384, 2048.0f));
+		assertEquals(100, CustomizeALotHeadIconRenderer.effectiveScalePercent(
+			100, true, 384, 1024.0f));
+		assertEquals(200, CustomizeALotHeadIconRenderer.effectiveScalePercent(
+			100, true, 384, 512.0f));
+		assertEquals(150, CustomizeALotHeadIconRenderer.effectiveScalePercent(
+			150, true, 384, 1024.0f));
+	}
+
+	@Test
+	public void extendedOuterZoomCanShrinkBelowConfiguredScaleFloor()
+	{
+		assertEquals(25, CustomizeALotHeadIconRenderer.effectiveScalePercent(
+			100, true, 384, 4096.0f));
+	}
+
+	@Test
+	public void disabledZoomScalingPreservesConfiguredPixelScale()
+	{
+		assertEquals(50, CustomizeALotHeadIconRenderer.effectiveScalePercent(
+			10, false, 384, 512.0f));
+		assertEquals(125, CustomizeALotHeadIconRenderer.effectiveScalePercent(
+			125, false, 384, 4096.0f));
+		assertEquals(200, CustomizeALotHeadIconRenderer.effectiveScalePercent(
+			500, false, 384, 512.0f));
+	}
+
+	@Test
+	public void invalidProjectionFallsBackToConfiguredPixelScale()
+	{
+		assertEquals(120, CustomizeALotHeadIconRenderer.effectiveScalePercent(
+			120, true, 0, 1024.0f));
+		assertEquals(120, CustomizeALotHeadIconRenderer.effectiveScalePercent(
+			120, true, 384, Float.NaN));
+		assertEquals(120, CustomizeALotHeadIconRenderer.effectiveScalePercent(
+			120, true, 384, Float.POSITIVE_INFINITY));
+		assertEquals(120, CustomizeALotHeadIconRenderer.effectiveScalePercent(
+			120, true, 384, 49.0f));
+	}
+
+	@Test
+	public void zoomScalingUsesSafeRenderBounds()
+	{
+		assertEquals(10, CustomizeALotHeadIconRenderer.effectiveScalePercent(
+			100, true, 1, Float.MAX_VALUE));
+		assertEquals(400, CustomizeALotHeadIconRenderer.effectiveScalePercent(
+			100, true, 10_000, 50.0f));
 	}
 
 	@Test
@@ -65,6 +118,22 @@ public class CustomizeALotHeadIconRendererTest
 		assertEquals(4, canvasWidth);
 		assertEquals(1, imageX);
 		assertEquals(3, imageWidth);
+		assertEquals(canvasWidth, imageX + imageWidth);
+	}
+
+	@Test
+	public void zoomedOutScalingKeepsCroppedSpriteInsideItsCanvas()
+	{
+		int percent = CustomizeALotHeadIconRenderer.effectiveScalePercent(
+			100, true, 384, 4096.0f);
+		int canvasWidth = CustomizeALotHeadIconRenderer.scaled(3, percent);
+		int imageX = CustomizeALotHeadIconRenderer.scaledEdge(1, percent);
+		int imageWidth = CustomizeALotHeadIconRenderer.scaledSpan(1, 2, percent);
+
+		assertEquals(25, percent);
+		assertEquals(1, canvasWidth);
+		assertEquals(0, imageX);
+		assertEquals(1, imageWidth);
 		assertEquals(canvasWidth, imageX + imageWidth);
 	}
 

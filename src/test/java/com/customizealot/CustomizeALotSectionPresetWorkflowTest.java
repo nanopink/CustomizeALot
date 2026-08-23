@@ -119,6 +119,7 @@ public class CustomizeALotSectionPresetWorkflowTest
 		assertEquals(100, icons.get(CustomizeALotConfig.HEAD_ICON_SCALE_PERCENT_KEY));
 		assertEquals(2, icons.get(CustomizeALotConfig.HEAD_ICON_SPACING_KEY));
 		assertFalse(icons.containsKey(CustomizeALotConfig.HEAD_ICONS_ENABLED_KEY));
+		assertFalse(icons.containsKey(CustomizeALotConfig.HEAD_ICON_SCALE_WITH_ZOOM_KEY));
 	}
 
 	@Test
@@ -372,6 +373,10 @@ public class CustomizeALotSectionPresetWorkflowTest
 		assertFalse(CustomizeALotPlugin.shouldSwitchHeadIconToCustom(
 			false,
 			CustomizeALotConfig.HEAD_ICONS_ENABLED_KEY,
+			CustomizeALotHeadIconPreset.RUNESCAPE));
+		assertFalse(CustomizeALotPlugin.shouldSwitchHeadIconToCustom(
+			false,
+			CustomizeALotConfig.HEAD_ICON_SCALE_WITH_ZOOM_KEY,
 			CustomizeALotHeadIconPreset.RUNESCAPE));
 		assertFalse(CustomizeALotPlugin.shouldSwitchHeadIconToCustom(
 			true,

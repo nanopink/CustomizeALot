@@ -114,6 +114,7 @@ public interface CustomizeALotConfig extends Config
 	String SHOW_NPC_ICONS_KEY = "showNpcIcons";
 	String SHOW_HINT_ARROWS_KEY = "showHintArrows";
 	String HEAD_ICON_SCALE_PERCENT_KEY = "headIconScalePercent";
+	String HEAD_ICON_SCALE_WITH_ZOOM_KEY = "headIconScaleWithZoom";
 	String HEAD_ICON_X_OFFSET_KEY = "headIconXOffset";
 	String HEAD_ICON_Y_OFFSET_KEY = "headIconYOffset";
 	String HEAD_ICON_SPACING_KEY = "headIconSpacing";
@@ -1356,7 +1357,7 @@ public interface CustomizeALotConfig extends Config
 	@ConfigItem(
 		keyName = HEAD_ICON_SCALE_PERCENT_KEY,
 		name = "Scale",
-		description = "Head-icon scale as a percentage of normal size.",
+		description = "Base head-icon scale as a percentage. Zoom scaling is applied on top when enabled.",
 		section = HEAD_ICONS_SECTION,
 		position = 6
 	)
@@ -1371,11 +1372,23 @@ public interface CustomizeALotConfig extends Config
 	}
 
 	@ConfigItem(
+		keyName = HEAD_ICON_SCALE_WITH_ZOOM_KEY,
+		name = "Scale with zoom",
+		description = "Adjust head-icon size with camera zoom so icons stay proportional to the game world.",
+		section = HEAD_ICONS_SECTION,
+		position = 7
+	)
+	default boolean headIconScaleWithZoom()
+	{
+		return true;
+	}
+
+	@ConfigItem(
 		keyName = HEAD_ICON_X_OFFSET_KEY,
 		name = "X offset",
 		description = "Horizontal head-icon offset in pixels.",
 		section = HEAD_ICONS_SECTION,
-		position = 7
+		position = 8
 	)
 	@Range(
 		min = -256,
@@ -1392,7 +1405,7 @@ public interface CustomizeALotConfig extends Config
 		name = "Y offset",
 		description = "Vertical head-icon offset in pixels. Positive values move icons upward.",
 		section = HEAD_ICONS_SECTION,
-		position = 8
+		position = 9
 	)
 	@Range(
 		min = -256,
@@ -1409,7 +1422,7 @@ public interface CustomizeALotConfig extends Config
 		name = "Spacing",
 		description = "Gap below the first head icon and between each stacked icon, in pixels.",
 		section = HEAD_ICONS_SECTION,
-		position = 9
+		position = 10
 	)
 	@Range(
 		min = 0,

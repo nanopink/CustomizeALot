@@ -94,6 +94,7 @@ public class CustomizeALotActorUiConfigTest
 		assertTrue(config.showNpcIcons());
 		assertTrue(config.showHintArrows());
 		assertEquals(100, config.headIconScalePercent());
+		assertTrue(config.headIconScaleWithZoom());
 		assertEquals(0, config.headIconXOffset());
 		assertEquals(0, config.headIconYOffset());
 		assertEquals(2, config.headIconSpacing());
