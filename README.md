@@ -2,7 +2,7 @@
 
 Customize hitsplats, health bars, overhead chat, and head icons for players and NPCs.
 
-[![Support development on Ko-fi](https://i.postimg.cc/9QyD37VJ/ko-fi-pink.png)](https://ko-fi.com/nanopink)
+[![Support development on Ko-fi](https://i.postimg.cc/fyjM2xYt/ko-fi-pink.png)](https://ko-fi.com/nanopink)
 
 *This plugin is free and open source. Optional support helps me maintain, improve, and create more RuneLite plugins.<br>
 All features remain available to everyone.*
