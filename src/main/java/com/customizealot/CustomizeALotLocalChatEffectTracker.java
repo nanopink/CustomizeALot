@@ -591,9 +591,7 @@ final class CustomizeALotLocalChatEffectTracker
 		{
 			return "";
 		}
-		return Text.removeFormattingTags(message)
-			.replace("<lt>", "<")
-			.replace("<gt>", ">")
+		return Text.unescapeJagex(Text.removeFormattingTags(message))
 			.replace('\u00A0', ' ')
 			.trim()
 			.toLowerCase(Locale.ROOT);

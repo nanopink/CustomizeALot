@@ -215,9 +215,7 @@ final class CustomizeALotOverheadChatRenderer
 			return "";
 		}
 
-		return Text.removeFormattingTags(overheadText)
-			.replace("<lt>", "<")
-			.replace("<gt>", ">");
+		return Text.unescapeJagex(Text.removeFormattingTags(overheadText));
 	}
 
 	static Color relationshipColor(

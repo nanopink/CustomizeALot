@@ -395,6 +395,59 @@ public class CustomizeALotLocalChatEffectTrackerTest
 	}
 
 	@Test
+	public void atEscapesCorrelateWithLocalEffectsAndColors()
+	{
+		CustomizeALotLocalChatEffectTracker tracker =
+			new CustomizeALotLocalChatEffectTracker();
+		Object local = new Object();
+
+		tracker.recordOutgoing("red:wave:name@example.com", 0, false, 100);
+		tracker.recordOverhead(local, local, "name<at>example.com", 101);
+
+		assertEquals(
+			CustomizeALotOverheadChatEffect.WAVE,
+			tracker.effectFor(
+				local,
+				"name<at>example.com",
+				CustomizeALotOverheadChatEffect.STATIC,
+				101));
+		assertEquals(
+			new Color(255, 0, 0, 77),
+			tracker.colorFor(
+				local,
+				"name<at>example.com",
+				new Color(1, 2, 3, 77),
+				101));
+	}
+
+	@Test
+	public void literalAtTagDoesNotCollideWithTheAtCharacter()
+	{
+		CustomizeALotLocalChatEffectTracker tracker =
+			new CustomizeALotLocalChatEffectTracker();
+		Object local = new Object();
+
+		tracker.recordOutgoing("wave:<at>", 0, false, 100);
+		tracker.recordOverhead(local, local, "<at>", 101);
+		assertEquals(
+			CustomizeALotOverheadChatEffect.STATIC,
+			tracker.effectFor(
+				local,
+				"<at>",
+				CustomizeALotOverheadChatEffect.STATIC,
+				101));
+
+		tracker.recordOverhead(local, local, "<lt>at<gt>", 102);
+		assertEquals(
+			CustomizeALotOverheadChatEffect.WAVE,
+			tracker.effectFor(
+				local,
+				"<lt>at<gt>",
+				CustomizeALotOverheadChatEffect.STATIC,
+				102));
+	}
+
+	@Test
 	public void invalidOrMissingEffectDoesNotCreateAnOverride()
 	{
 		assertNull(CustomizeALotLocalChatEffectTracker.parseInput("red:hello").getEffect());

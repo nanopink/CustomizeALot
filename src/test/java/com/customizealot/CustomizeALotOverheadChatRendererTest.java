@@ -21,7 +21,7 @@ import org.junit.Test;
 public class CustomizeALotOverheadChatRendererTest
 {
 	@Test
-	public void formattingIsRemovedWithoutLosingEscapedAngleBrackets()
+	public void formattingIsRemovedWithoutLosingPrintableJagexCharacters()
 	{
 		assertEquals("<3 > 2",
 			CustomizeALotOverheadChatRenderer.displayText("<lt>3 <gt> 2"));
@@ -31,6 +31,12 @@ public class CustomizeALotOverheadChatRendererTest
 			CustomizeALotOverheadChatRenderer.displayText("<lt>col=ff0000<gt>"));
 		assertEquals("Café ★ & 'quotes'",
 			CustomizeALotOverheadChatRenderer.displayText("Café ★ & 'quotes'"));
+		assertEquals("Meet @ bank",
+			CustomizeALotOverheadChatRenderer.displayText("Meet <at> bank"));
+		assertEquals("Literal <at> stays literal",
+			CustomizeALotOverheadChatRenderer.displayText("Literal <lt>at<gt> stays literal"));
+		assertEquals("non-breaking-hyphen",
+			CustomizeALotOverheadChatRenderer.displayText("non<nbh>breaking<nbh>hyphen"));
 	}
 
 	@Test
