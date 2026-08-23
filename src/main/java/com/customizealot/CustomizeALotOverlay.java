@@ -140,6 +140,13 @@ public class CustomizeALotOverlay extends Overlay
 				{
 					continue;
 				}
+				if (actorUiVisibilityTracker.retainedNativeUi(actor, gameCycle))
+				{
+					// The native actor UI is all or nothing. Keep only Doom's custom
+					// primary health bar here and avoid duplicate replacement UI.
+					renderReplacementHealthWithNativeUi(overlayGraphics, actor, gameCycle);
+					continue;
+				}
 
 				boolean chatEnabled = chatStyle.shouldRender(actor instanceof NPC);
 				CustomizeALotLocalChatEffectTracker.MessageState messageState = null;
@@ -255,6 +262,25 @@ public class CustomizeALotOverlay extends Overlay
 		}
 
 		return null;
+	}
+
+	private void renderReplacementHealthWithNativeUi(
+		Graphics2D graphics,
+		Actor actor,
+		int gameCycle)
+	{
+		if (!CustomizeALotActorUiVisibilityTracker.shouldRenderReplacementHealthWithNativeUi(actor)
+			|| !healthBarRenderer.hasRenderableHealthBar(actor))
+		{
+			return;
+		}
+
+		int projectionHeight = actorProjectionHeight(actorBaseOverheadHeight(actor, gameCycle));
+		Point actorTop = actorTopAnchor(actor, projectionHeight);
+		if (actorTop != null)
+		{
+			healthBarRenderer.render(graphics, actor, actorTop, actorTop.getY());
+		}
 	}
 
 	static Color relationshipChatColor(

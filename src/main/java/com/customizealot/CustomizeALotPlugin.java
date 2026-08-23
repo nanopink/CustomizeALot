@@ -82,6 +82,9 @@ public class CustomizeALotPlugin extends Plugin
 	private CustomizeALotActorUiVisibilityTracker actorUiVisibilityTracker;
 
 	@Inject
+	private CustomizeALotStandardHealthSpriteSuppressor standardHealthSpriteSuppressor;
+
+	@Inject
 	private CustomizeALotLocalChatEffectTracker localChatEffectTracker;
 
 	private final Map<Actor, CopyOnWriteArrayList<CustomizeALotHitsplat>> hitsplats = new ConcurrentHashMap<>();
@@ -109,13 +112,23 @@ public class CustomizeALotPlugin extends Plugin
 		migrateLegacyConfig();
 		overlay.clearCaches();
 		overlayManager.add(overlay);
+		standardHealthSpriteSuppressor.requestEnable();
 		try
 		{
+			clientThread.invoke(() ->
+			{
+				return standardHealthSpriteSuppressor.applyRequested();
+			});
 			actorUiVisibilityTracker.enable();
 		}
 		catch (RuntimeException | Error ex)
 		{
 			actorUiVisibilityTracker.disable();
+			standardHealthSpriteSuppressor.requestDisable();
+			clientThread.invoke(() ->
+			{
+				return standardHealthSpriteSuppressor.removeOwnedOverrides();
+			});
 			overlayManager.remove(overlay);
 			throw ex;
 		}
@@ -126,17 +139,28 @@ public class CustomizeALotPlugin extends Plugin
 	{
 		cancelPendingCustomSelection();
 		localChatEffectTracker.clear();
+		standardHealthSpriteSuppressor.requestDisable();
 		try
 		{
 			actorUiVisibilityTracker.disable();
 		}
 		finally
 		{
-			overlayManager.remove(overlay);
-			overlay.clearCaches();
-			hitsplats.clear();
-			targetClassifications.clear();
-			nextSequence = 0;
+			try
+			{
+				clientThread.invoke(() ->
+				{
+					return standardHealthSpriteSuppressor.removeOwnedOverrides();
+				});
+			}
+			finally
+			{
+				overlayManager.remove(overlay);
+				overlay.clearCaches();
+				hitsplats.clear();
+				targetClassifications.clear();
+				nextSequence = 0;
+			}
 		}
 	}
 
@@ -254,6 +278,10 @@ public class CustomizeALotPlugin extends Plugin
 		{
 			// Stay behind actor-hiding callbacks so an accepted actor was accepted by all of them.
 			actorUiVisibilityTracker.moveToEnd();
+			clientThread.invokeLater(() ->
+			{
+				return standardHealthSpriteSuppressor.applyRequested();
+			});
 		}
 	}
 
@@ -262,6 +290,10 @@ public class CustomizeALotPlugin extends Plugin
 	{
 		if (!CustomizeALotConfig.GROUP.equals(event.getGroup()))
 		{
+			clientThread.invokeLater(() ->
+			{
+				return standardHealthSpriteSuppressor.applyRequested();
+			});
 			return;
 		}
 		if (migratingConfig)
@@ -593,6 +625,13 @@ public class CustomizeALotPlugin extends Plugin
 	public void onGameStateChanged(GameStateChanged event)
 	{
 		overlay.clearCaches();
+		if (event.getGameState() == GameState.STARTING)
+		{
+			clientThread.invoke(() ->
+			{
+				return standardHealthSpriteSuppressor.reapplyRequested();
+			});
+		}
 		if (event.getGameState() != GameState.LOGGED_IN)
 		{
 			actorUiVisibilityTracker.clear();
