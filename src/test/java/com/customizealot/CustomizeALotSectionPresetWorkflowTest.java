@@ -113,7 +113,7 @@ public class CustomizeALotSectionPresetWorkflowTest
 			chat.get(CustomizeALotConfig.OVERHEAD_CHAT_GROUP_IRON_COLOR_KEY));
 		assertFalse(chat.containsKey(CustomizeALotConfig.OVERHEAD_CHAT_ENABLED_KEY));
 
-		assertEquals(9, icons.size());
+		assertEquals(10, icons.size());
 		assertEquals(true,
 			icons.get(CustomizeALotConfig.SHOW_PRAYER_ICON_BACKGROUND_KEY));
 		assertEquals(100, icons.get(CustomizeALotConfig.HEAD_ICON_SCALE_PERCENT_KEY));

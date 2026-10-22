@@ -190,8 +190,8 @@ public class CustomizeALotOverlay extends Overlay
 						chatStyle,
 						chatColor);
 				}
-				// Height offsets are 3D model units. Project once here so every
-				// component gap and configured offset remains in canvas pixels.
+				// Share the base projection for pixel offsets and component gaps.
+				// The head-icon Z offset is projected separately in world units.
 				boolean renderHealthBar = healthBarRenderer.hasRenderableHealthBar(actor);
 				boolean renderHeadIcons = headIconRenderer.prepare(actor);
 				boolean projectActorTop = needsActorTop(
@@ -221,11 +221,23 @@ public class CustomizeALotOverlay extends Overlay
 						actorTop,
 						upperStackAnchorY)
 					: CustomizeALotHealthBarRenderer.NO_OCCUPIED_TOP;
+				int headIconProjectionHeight = projectionHeight;
+				Point headIconAnchor = actorTop;
+				if (renderHeadIcons && actorTop != null)
+				{
+					int zOffset = Math.max(-1024, Math.min(1024, config.headIconZOffset()));
+					if (zOffset != 0)
+					{
+						headIconProjectionHeight += zOffset;
+						headIconAnchor = actorTopAnchor(actor, headIconProjectionHeight);
+					}
+				}
 				int occupiedTopY = headIconRenderer.renderPrepared(
 					overlayGraphics,
 					actor,
-					projectionHeight,
+					headIconProjectionHeight,
 					actorTop,
+					headIconAnchor,
 					upperStackAnchorY,
 					healthBarTopY);
 				if (renderChat)

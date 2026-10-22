@@ -117,6 +117,7 @@ public interface CustomizeALotConfig extends Config
 	String HEAD_ICON_SCALE_WITH_ZOOM_KEY = "headIconScaleWithZoom";
 	String HEAD_ICON_X_OFFSET_KEY = "headIconXOffset";
 	String HEAD_ICON_Y_OFFSET_KEY = "headIconYOffset";
+	String HEAD_ICON_Z_OFFSET_KEY = "headIconZOffset";
 	String HEAD_ICON_SPACING_KEY = "headIconSpacing";
 	String SPRITE_SCALING_MODE_KEY = "spriteScalingMode";
 
@@ -1418,11 +1419,27 @@ public interface CustomizeALotConfig extends Config
 	}
 
 	@ConfigItem(
+		keyName = HEAD_ICON_Z_OFFSET_KEY,
+		name = "Z offset",
+		description = "Head-icon height offset in world units, following camera zoom and angle. Positive values raise icons. Applied in addition to X and Y pixel offsets.",
+		section = HEAD_ICONS_SECTION,
+		position = 10
+	)
+	@Range(
+		min = -1024,
+		max = 1024
+	)
+	default int headIconZOffset()
+	{
+		return 0;
+	}
+
+	@ConfigItem(
 		keyName = HEAD_ICON_SPACING_KEY,
 		name = "Spacing",
 		description = "Gap below the first head icon and between each stacked icon, in pixels.",
 		section = HEAD_ICONS_SECTION,
-		position = 10
+		position = 11
 	)
 	@Range(
 		min = 0,

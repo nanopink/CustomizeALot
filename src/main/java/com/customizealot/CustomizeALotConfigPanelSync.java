@@ -492,6 +492,7 @@ final class CustomizeALotConfigPanelSync
 		field(fields, HEAD_ICONS_SECTION, "Scale", CustomizeALotConfig.HEAD_ICON_SCALE_PERCENT_KEY);
 		field(fields, HEAD_ICONS_SECTION, "X offset", CustomizeALotConfig.HEAD_ICON_X_OFFSET_KEY);
 		field(fields, HEAD_ICONS_SECTION, "Y offset", CustomizeALotConfig.HEAD_ICON_Y_OFFSET_KEY);
+		field(fields, HEAD_ICONS_SECTION, "Z offset", CustomizeALotConfig.HEAD_ICON_Z_OFFSET_KEY);
 		field(fields, HEAD_ICONS_SECTION, "Spacing", CustomizeALotConfig.HEAD_ICON_SPACING_KEY);
 
 		return Collections.unmodifiableMap(fields);

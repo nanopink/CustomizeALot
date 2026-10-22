@@ -1319,6 +1319,7 @@ public class CustomizeALotPlugin extends Plugin
 		values.put(CustomizeALotConfig.HEAD_ICON_SCALE_PERCENT_KEY, config.headIconScalePercent());
 		values.put(CustomizeALotConfig.HEAD_ICON_X_OFFSET_KEY, config.headIconXOffset());
 		values.put(CustomizeALotConfig.HEAD_ICON_Y_OFFSET_KEY, config.headIconYOffset());
+		values.put(CustomizeALotConfig.HEAD_ICON_Z_OFFSET_KEY, config.headIconZOffset());
 		values.put(CustomizeALotConfig.HEAD_ICON_SPACING_KEY, config.headIconSpacing());
 		return presetSettingsMatch(preset.getSettings(), values);
 	}

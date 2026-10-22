@@ -36,6 +36,7 @@ public enum CustomizeALotHeadIconPreset
 		values.put(CustomizeALotConfig.HEAD_ICON_SCALE_PERCENT_KEY, 100);
 		values.put(CustomizeALotConfig.HEAD_ICON_X_OFFSET_KEY, 0);
 		values.put(CustomizeALotConfig.HEAD_ICON_Y_OFFSET_KEY, 0);
+		values.put(CustomizeALotConfig.HEAD_ICON_Z_OFFSET_KEY, 0);
 		values.put(CustomizeALotConfig.HEAD_ICON_SPACING_KEY, 2);
 		return Collections.unmodifiableMap(values);
 	}

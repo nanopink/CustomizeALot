@@ -86,10 +86,11 @@ final class CustomizeALotHeadIconRenderer
 		Actor actor,
 		int projectionHeight,
 		Point anchor,
+		Point iconAnchor,
 		int stackAnchorY,
 		int occupiedTopY)
 	{
-		if (actor != preparedActor || anchor == null || iconBuffer.isEmpty())
+		if (actor != preparedActor || anchor == null || iconAnchor == null || iconBuffer.isEmpty())
 		{
 			clearPrepared();
 			return occupiedTopY;
@@ -106,7 +107,7 @@ final class CustomizeALotHeadIconRenderer
 			stackAnchorY,
 			occupiedTopY,
 			config.headIconYOffset(),
-			spacing);
+			spacing) + iconAnchor.getY() - anchor.getY();
 
 		int occupiedTop = occupiedTopY;
 		CustomizeALotSpriteScalingMode scalingMode = config.spriteScalingMode();
@@ -125,7 +126,7 @@ final class CustomizeALotHeadIconRenderer
 				int imageWidth = scaledSpan(icon.getOffsetX(), icon.getWidth(), percent);
 				int imageHeight = scaledSpan(icon.getOffsetY(), icon.getHeight(), percent);
 				int canvasX = iconLeft(
-					anchor.getX(),
+					iconAnchor.getX(),
 					canvasWidth,
 					config.headIconXOffset());
 				int canvasY = cursorBottomY - canvasHeight;
